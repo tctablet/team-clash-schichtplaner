@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Clash - Verfügbarkeit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1 class="logo">TEAM <span class="accent">CLASH</span></h1>
+      <p class="subtitle">Verfügbarkeitsplanung</p>
+      <div class="progress-bar">
+        <div class="progress-step active" data-step="1">1</div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="2">2</div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="3">3</div>
+      </div>
+    </header>
+
+    <!-- Step 1: Code Entry -->
+    <section id="step-1" class="step active visible">
+      <h2>Code eingeben</h2>
+      <div class="pin-entry">
+        <div class="pin-fields" id="pin-fields">
+          <input type="tel" maxlength="1" inputmode="numeric" class="pin-digit" data-idx="0" autocomplete="off">
+          <input type="tel" maxlength="1" inputmode="numeric" class="pin-digit" data-idx="1" autocomplete="off">
+          <input type="tel" maxlength="1" inputmode="numeric" class="pin-digit" data-idx="2" autocomplete="off">
+          <input type="tel" maxlength="1" inputmode="numeric" class="pin-digit" data-idx="3" autocomplete="off">
+        </div>
+        <div class="pin-feedback" id="pin-feedback"></div>
+      </div>
+    </section>
+
+    <!-- Admin Panel -->
+    <section id="step-admin" class="step">
+      <div class="step-nav">
+        <button class="btn-back" id="btn-back-admin">&larr; Zurück</button>
+      </div>
+      <h2>Admin – Codes</h2>
+      <div class="admin-panel">
+        <table class="code-table" id="code-table"></table>
+        <button class="btn-primary btn-copy" id="btn-copy-codes">Codes kopieren</button>
+      </div>
+    </section>
+
+    <!-- Step 2: KW Selection -->
+    <section id="step-2" class="step">
+      <div class="step-nav">
+        <button class="btn-back" id="btn-back-2">&larr; Zurück</button>
+      </div>
+      <h2>Kalenderwoche wählen</h2>
+      <p class="selected-mod-label">Moderator: <span id="selected-mod-name" class="accent"></span></p>
+      <div class="deadline-hint">Verfügbarkeit für die Folgewoche bis spätestens <strong>Donnerstag 18:00 Uhr</strong> eintragen.</div>
+      <div class="kw-calendar" id="kw-calendar"></div>
+      <div class="kw-selected-info" id="kw-selected-info"></div>
+      <button class="btn-primary" id="btn-next-2" disabled>Weiter &rarr;</button>
+    </section>
+
+    <!-- Step 3: Availability -->
+    <section id="step-3" class="step">
+      <div class="step-nav">
+        <button class="btn-back" id="btn-back-3">&larr; Zurück</button>
+      </div>
+      <h2 id="availability-title">Verfügbarkeit</h2>
+      <p class="selected-mod-label">Moderator: <span id="selected-mod-name-2" class="accent"></span></p>
+
+      <div class="availability-section">
+        <h3 class="section-title">
+          <span class="section-icon">&#128197;</span>
+          KW <span id="kw-label-weekly"></span>
+        </h3>
+        <div id="weekly-sliders" class="slider-group"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="availability-section general-section" id="general-section">
+        <div class="general-header">
+          <div>
+            <h3 class="section-title general-title">
+              <span class="section-icon">&#128260;</span>
+              Generelle Verfügbarkeit
+            </h3>
+            <p class="section-hint">Deine Standard-Verfügbarkeit pro Wochentag</p>
+          </div>
+          <button class="btn-edit" id="btn-edit-general">Bearbeiten</button>
+        </div>
+        <div id="general-sliders" class="slider-group general-sliders collapsed"></div>
+      </div>
+
+      <button class="btn-primary btn-submit" id="btn-submit">Speichern</button>
+    </section>
+
+    <!-- Success Toast -->
+    <div class="toast" id="toast">
+      <span class="toast-icon">&#10003;</span>
+      <span class="toast-text">Verfügbarkeit gespeichert!</span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
