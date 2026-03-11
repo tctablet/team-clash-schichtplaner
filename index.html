@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Team Clash - Verfügbarkeit</title>
+  <title>Team Clash - Schichtplaner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
   <div class="app">
     <header>
       <h1 class="logo">TEAM <span class="accent">CLASH</span></h1>
-      <p class="subtitle">Verfügbarkeitsplanung</p>
+      <p class="subtitle">Schichtplaner</p>
       <div class="progress-bar">
         <div class="progress-step active" data-step="1">1</div>
         <div class="progress-line"></div>
@@ -43,10 +43,77 @@
       <div class="step-nav">
         <button class="btn-back" id="btn-back-admin">&larr; Zurück</button>
       </div>
-      <h2>Admin – Codes</h2>
-      <div class="admin-panel">
-        <table class="code-table" id="code-table"></table>
-        <button class="btn-primary btn-copy" id="btn-copy-codes">Codes kopieren</button>
+      <h2>Admin</h2>
+
+      <!-- Admin Tabs -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="admin-overview">Wochenplan</button>
+        <button class="admin-tab" data-tab="admin-codes">Codes</button>
+      </div>
+
+      <!-- Tab: Full Overview -->
+      <div class="admin-tab-content active" id="admin-overview">
+        <div class="shift-week-nav">
+          <button class="cal-nav" id="admin-prev">&larr;</button>
+          <h3 id="admin-week-title">KW --</h3>
+          <button class="cal-nav" id="admin-next">&rarr;</button>
+        </div>
+        <div class="shift-date-range" id="admin-date-range"></div>
+        <div class="admin-overview-calendar" id="admin-calendar">
+          <div class="shift-loading">Lade Schichtplan...</div>
+        </div>
+      </div>
+
+      <!-- Tab: Codes -->
+      <div class="admin-tab-content" id="admin-codes">
+        <div class="admin-panel">
+          <table class="code-table" id="code-table"></table>
+          <button class="btn-primary btn-save-codes" id="btn-save-codes" style="display:none;">Codes speichern</button>
+          <button class="btn-primary btn-copy" id="btn-copy-codes">Codes kopieren</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hub: Main Menu after login -->
+    <section id="step-hub" class="step">
+      <div class="step-nav">
+        <button class="btn-back" id="btn-back-hub">&larr; Logout</button>
+      </div>
+      <h2>Hallo, <span id="hub-name" class="accent"></span></h2>
+      <div class="hub-menu">
+        <button class="hub-card" id="hub-shifts">
+          <span class="hub-icon">&#128197;</span>
+          <span class="hub-label">Meine Schichten</span>
+          <span class="hub-desc">Wochenplan einsehen</span>
+        </button>
+        <button class="hub-card" id="hub-availability">
+          <span class="hub-icon">&#128336;</span>
+          <span class="hub-label">Verfügbarkeit</span>
+          <span class="hub-desc">Zeiten eintragen</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Shift Calendar View -->
+    <section id="step-shifts" class="step">
+      <div class="step-nav">
+        <button class="btn-back" id="btn-back-shifts">&larr; Zurück</button>
+      </div>
+      <h2>Meine Schichten</h2>
+      <p class="selected-mod-label">Moderator: <span id="shift-mod-name" class="accent"></span></p>
+      <div class="shift-week-nav">
+        <button class="cal-nav" id="shift-prev">&larr;</button>
+        <h3 id="shift-week-title">KW --</h3>
+        <button class="cal-nav" id="shift-next">&rarr;</button>
+      </div>
+      <div class="shift-date-range" id="shift-date-range"></div>
+      <div class="shift-calendar" id="shift-calendar">
+        <div class="shift-loading">Lade Schichtplan...</div>
+      </div>
+      <div class="shift-legend">
+        <span class="legend-item"><span class="legend-dot mod"></span> Moderator</span>
+        <span class="legend-item"><span class="legend-dot sup"></span> Support</span>
+        <span class="legend-item"><span class="legend-dot aussen"></span> Außenslot</span>
       </div>
     </section>
 
