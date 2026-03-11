@@ -20,6 +20,7 @@ const SLIDER_DEFAULT = [8.5, 24]; // 08:30 - 00:00
 const STORAGE_KEY = "tc_availability";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzo49x_AiRLe_kX0lO56KgeyHGFNoBTAQusLOgZSoNT5CpAHkdThe_T2AUNJxMFR-1p/exec";
 const DAY_MAP = { montag: "Mo", dienstag: "Di", mittwoch: "Mi", donnerstag: "Do", freitag: "Fr", samstag: "Sa", sonntag: "So" };
+function roomName(id) { return /^\d+(\.\d+)?$/.test(String(id)) ? `Raum ${Math.floor(id)}` : String(id); }
 
 // Default general availability per team member (from team_overview)
 const GENERAL_DEFAULTS = {
@@ -54,6 +55,7 @@ let shiftWeekYear = null;
 let shiftPlanCache = {};
 let adminWeekKW = null;
 let adminWeekYear = null;
+const unlockedWeeks = new Set(JSON.parse(localStorage.getItem("tc_unlocked_weeks") || "[]"));
 
 // ===== Init =====
 document.addEventListener("DOMContentLoaded", () => {
@@ -184,7 +186,17 @@ function getDeadlineForWeek(kw, kwYear) {
   return new Date(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + 3, 18, 0, 0);
 }
 
+function unlockKey(kw, kwYear) { return `${kwYear}-KW${kw}`; }
+
+function toggleWeekUnlock(kw, kwYear) {
+  const key = unlockKey(kw, kwYear);
+  if (unlockedWeeks.has(key)) unlockedWeeks.delete(key);
+  else unlockedWeeks.add(key);
+  localStorage.setItem("tc_unlocked_weeks", JSON.stringify([...unlockedWeeks]));
+}
+
 function getDeadlineStatus(kw, kwYear) {
+  if (unlockedWeeks.has(unlockKey(kw, kwYear))) return "unlocked";
   const now = new Date();
   const deadline = getDeadlineForWeek(kw, kwYear);
   const diff = deadline - now;
@@ -198,6 +210,7 @@ function formatDeadline(kw, kwYear) {
   const status = getDeadlineStatus(kw, kwYear);
   const day = String(deadline.getDate()).padStart(2, "0");
   const month = String(deadline.getMonth() + 1).padStart(2, "0");
+  if (status === "unlocked") return `<span class="deadline-text deadline-unlocked">Frist aufgehoben (Admin)</span>`;
   if (status === "passed") return `<span class="deadline-text deadline-passed">Frist abgelaufen (Do ${day}.${month}. 18:00)</span>`;
   if (status === "soon") return `<span class="deadline-text deadline-soon">Frist: Do ${day}.${month}. 18:00 – bald!</span>`;
   return `<span class="deadline-text">Frist: Do ${day}.${month}. 18:00</span>`;
@@ -298,7 +311,7 @@ function renderCalendar() {
       selectedKW = parseInt(row.dataset.kw);
       selectedYear = parseInt(row.dataset.year);
       const dlStatus = getDeadlineStatus(selectedKW, selectedYear);
-      document.getElementById("btn-next-2").disabled = dlStatus === "passed";
+      document.getElementById("btn-next-2").disabled = dlStatus === "passed" && !unlockedWeeks.has(unlockKey(selectedKW, selectedYear));
 
       const monday = getMondayOfISOWeek(selectedKW, selectedYear);
       const sunday = new Date(monday);
@@ -916,7 +929,7 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries) {
         </div>`;
       } else {
         // Moderator/booking event
-        const room = shift.room || "";
+        const room = shift.room ? roomName(shift.room) : "";
         let label = filterName ? (room || formatTimeFromValue(shift.slot)) : (shift.moderator || "");
         const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
         const startTime = formatTimeFromValue(shift.slot);
@@ -961,7 +974,7 @@ function renderShiftCalendar(planData, monday) {
 }
 
 function renderShiftCard(shift) {
-  const room = shift.room || "–";
+  const room = shift.room ? roomName(shift.room) : "–";
   const slot = formatTimeFromValue(shift.slot) || "–";
 
   let aussenHtml = "";
@@ -1011,6 +1024,19 @@ async function loadAndRenderAdminShifts() {
   document.getElementById("admin-date-range").textContent =
     `${formatDateLong(monday)} – ${formatDateLong(sunday)}`;
 
+  // Unlock button
+  const unlockBtn = document.getElementById("btn-unlock-week");
+  const isUnlocked = unlockedWeeks.has(unlockKey(adminWeekKW, adminWeekYear));
+  const dlStatus = getDeadlineStatus(adminWeekKW, adminWeekYear);
+  const showUnlock = dlStatus === "passed" || dlStatus === "unlocked";
+  unlockBtn.style.display = showUnlock ? "block" : "none";
+  unlockBtn.textContent = isUnlocked ? "Frist wieder sperren" : "Frist aufheben";
+  unlockBtn.className = `btn-unlock-week ${isUnlocked ? "unlocked" : ""}`;
+  unlockBtn.onclick = () => {
+    toggleWeekUnlock(adminWeekKW, adminWeekYear);
+    loadAndRenderAdminShifts();
+  };
+
   const cal = document.getElementById("admin-calendar");
   cal.innerHTML = '<div class="shift-loading">Lade Schichtplan...</div>';
 
@@ -1038,7 +1064,7 @@ async function loadAndRenderAdminShifts() {
 
 function renderAdminShiftCard(shift, supportForDay) {
   const mod = shift.moderator || "–";
-  const room = shift.room || "–";
+  const room = shift.room ? roomName(shift.room) : "–";
   const slot = formatTimeFromValue(shift.slot) || "–";
 
   let aussenHtml = "";

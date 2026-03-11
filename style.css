@@ -561,6 +561,36 @@ header {
   font-weight: 600;
 }
 
+.deadline-text.deadline-unlocked {
+  color: var(--green, #10b981);
+  font-weight: 600;
+}
+
+.btn-unlock-week {
+  display: none;
+  margin: 8px auto;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-unlock-week:hover {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.btn-unlock-week.unlocked {
+  border-color: var(--green, #10b981);
+  color: var(--green, #10b981);
+}
+
+.btn-unlock-week.unlocked:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
 .kw-selected-info {
   text-align: center;
   font-size: 0.85rem;
