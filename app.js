@@ -1028,8 +1028,7 @@ async function loadAndRenderAdminShifts() {
   const unlockBtn = document.getElementById("btn-unlock-week");
   const isUnlocked = unlockedWeeks.has(unlockKey(adminWeekKW, adminWeekYear));
   const dlStatus = getDeadlineStatus(adminWeekKW, adminWeekYear);
-  const showUnlock = dlStatus === "passed" || dlStatus === "unlocked";
-  unlockBtn.style.display = showUnlock ? "block" : "none";
+  unlockBtn.style.display = "block";
   unlockBtn.textContent = isUnlocked ? "Frist wieder sperren" : "Frist aufheben";
   unlockBtn.className = `btn-unlock-week ${isUnlocked ? "unlocked" : ""}`;
   unlockBtn.onclick = () => {
