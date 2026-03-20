@@ -1470,6 +1470,54 @@ header {
   border-left: 3px solid var(--purple);
 }
 
+/* Außenslot overlay blocks */
+.tg-event.tg-aussen {
+  background: rgba(45, 212, 191, 0.20);
+  border-left: 3px solid #2dd4bf;
+  z-index: 5;
+}
+
+.tg-event.tg-aussen .tg-event-time {
+  color: #2dd4bf;
+}
+
+.tg-event.tg-aussen .tg-event-label {
+  color: var(--person-color, #2dd4bf);
+}
+
+/* Simplified mod card when AS mode is on */
+.tg-event.tg-mod.has-as {
+  border-left-style: dashed;
+}
+
+/* AS toggle button */
+.as-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 6px;
+}
+
+.as-toggle:hover {
+  border-color: #2dd4bf;
+  color: #2dd4bf;
+}
+
+.as-toggle.active {
+  background: rgba(45, 212, 191, 0.15);
+  border-color: #2dd4bf;
+  color: #2dd4bf;
+}
+
 /* Support band (right edge, like Godot app) */
 .tg-support-band {
   position: absolute;

@@ -87,6 +87,7 @@ let availWeekYear = null;
 let availViewType = "weekly"; // "weekly" or "general"
 let availDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0=Mo
 let availCache = {}; // { "KW_YEAR": { weekly: [...], general: [...] } }
+let showAussenSlots = false; // Außenslot overlay toggle
 
 // ===== Init =====
 document.addEventListener("DOMContentLoaded", () => {
@@ -813,7 +814,7 @@ function getShiftStartEnd(shift) {
   let startMin = parseTimeToMinutes(shift.slot);
   let endMin;
 
-  if (shift.aussenslot_end) {
+  if (shift.aussenslot_end && !showAussenSlots) {
     endMin = parseTimeToMinutes(shift.aussenslot_end);
   } else {
     endMin = startMin != null ? startMin + DEFAULT_SLOT_DURATION : null;
@@ -948,6 +949,7 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
 
     // Render mod events — all visible, equal-width columns
     let eventsHtml = "";
+    let aussenHtml = "";
     modEvents.forEach((ev) => {
       const { shift, startMin, endMin } = ev;
       const topPct = ((startMin - gridStartH * 60) / (gridHours * 60)) * 100;
@@ -960,14 +962,40 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
       const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
       const startTime = formatTimeFromValue(shift.slot);
 
-      eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="${shift.booking_code || ""}">
-        <div class="tg-event-content">
-          <span class="tg-event-time">${startTime}</span>
-          <span class="tg-event-label">${label}</span>
-          ${room && !filterName ? `<span class="tg-event-room">${room}</span>` : ""}
-          ${hasAussen ? `<div class="tg-aussen-dot" title="AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}"></div>` : ""}
-        </div>
-      </div>`;
+      if (showAussenSlots) {
+        // Simplified mod card
+        eventsHtml += `<div class="tg-event tg-mod ${hasAussen ? "has-as" : ""}" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="${shift.booking_code || ""}">
+          <div class="tg-event-content">
+            <span class="tg-event-label">${shift.moderator || ""}</span>
+          </div>
+        </div>`;
+        // Separate Außenslot overlay block
+        if (hasAussen) {
+          const asStart = parseTimeToMinutes(shift.aussenslot_start);
+          const asEnd = parseTimeToMinutes(shift.aussenslot_end);
+          if (asStart != null && asEnd != null) {
+            const asTopPct = ((asStart - gridStartH * 60) / (gridHours * 60)) * 100;
+            const asHeightPct = ((asEnd - asStart) / (gridHours * 60)) * 100;
+            const asStartTime = formatTimeFromValue(shift.aussenslot_start);
+            const asEndTime = formatTimeFromValue(shift.aussenslot_end);
+            aussenHtml += `<div class="tg-event tg-aussen" style="top:${asTopPct}%;height:${asHeightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="AS: ${shift.moderator}">
+              <div class="tg-event-content">
+                <span class="tg-event-time">${asStartTime}–${asEndTime}</span>
+                <span class="tg-event-label">${shift.moderator || ""}</span>
+              </div>
+            </div>`;
+          }
+        }
+      } else {
+        eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="${shift.booking_code || ""}">
+          <div class="tg-event-content">
+            <span class="tg-event-time">${startTime}</span>
+            <span class="tg-event-label">${label}</span>
+            ${room && !filterName ? `<span class="tg-event-room">${room}</span>` : ""}
+            ${hasAussen ? `<div class="tg-aussen-dot" title="AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}"></div>` : ""}
+          </div>
+        </div>`;
+      }
     });
 
     // Render support as a vertical band on the right edge (like Godot app)
@@ -1002,7 +1030,7 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
       </div>
       <div class="tg-col-body${hasSupBand ? " has-support" : ""}">
         ${linesHtml}
-        <div class="tg-events-area">${eventsHtml}</div>
+        <div class="tg-events-area">${eventsHtml}${aussenHtml}</div>
         ${supportBandHtml}
       </div>
     </div>`;
@@ -1240,6 +1268,22 @@ function initViewToggles() {
           if (lastPlanDataAdmin && lastMondayAdmin) renderAdminCalendar(lastPlanDataAdmin, lastMondayAdmin);
         }
       });
+    });
+  });
+
+  // Außenslot toggle buttons
+  ["shifts", "admin"].forEach((ctx) => {
+    const btn = document.getElementById(`as-toggle-${ctx}`);
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      showAussenSlots = !showAussenSlots;
+      document.querySelectorAll(".as-toggle").forEach((b) => b.classList.toggle("active", showAussenSlots));
+      if (ctx === "shifts" || lastPlanDataShifts) {
+        if (lastPlanDataShifts && lastMondayShifts) renderShiftCalendar(lastPlanDataShifts, lastMondayShifts);
+      }
+      if (ctx === "admin" || lastPlanDataAdmin) {
+        if (lastPlanDataAdmin && lastMondayAdmin) renderAdminCalendar(lastPlanDataAdmin, lastMondayAdmin);
+      }
     });
   });
 
