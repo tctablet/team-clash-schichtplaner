@@ -1475,7 +1475,7 @@ header {
   position: absolute;
   top: 0;
   right: 0;
-  width: 28px;
+  width: 56px;
   height: 100%;
   z-index: 3;
 }
@@ -1505,7 +1505,7 @@ header {
 }
 
 .tg-support-name {
-  font-size: 0.5rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--person-color, var(--purple));
   writing-mode: vertical-rl;
@@ -1516,7 +1516,7 @@ header {
 }
 
 .tg-support-time {
-  font-size: 0.4rem;
+  font-size: 0.8rem;
   color: color-mix(in srgb, var(--person-color, var(--purple)) 80%, transparent);
   writing-mode: vertical-rl;
   text-orientation: mixed;
@@ -1533,7 +1533,7 @@ header {
 }
 
 .has-support .tg-events-area {
-  right: 30px;
+  right: 58px;
 }
 
 .tg-event-content {
