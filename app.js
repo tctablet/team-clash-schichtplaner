@@ -1093,32 +1093,33 @@ const TEST_WEEK_KW = 12; // KW 12 2026 (aktuelle Woche)
 const TEST_WEEK_YEAR = 2026;
 const TEST_PLAN_DATA = {
   plan: [
-    // Montag – 3 parallele Schichten
-    { day: "Montag", moderator: "Sascha", room: "1", slot: "09:00", booking_code: "BC-1001", aussenslot_start: "", aussenslot_end: "" },
-    { day: "Montag", moderator: "Alexa", room: "2", slot: "09:30", booking_code: "BC-1002", aussenslot_start: "11:00", aussenslot_end: "12:00" },
-    { day: "Montag", moderator: "Quynh", room: "3", slot: "14:00", booking_code: "BC-1003", aussenslot_start: "", aussenslot_end: "" },
-    // Dienstag – 2 Schichten + Überlappung
-    { day: "Dienstag", moderator: "Vanessa", room: "1", slot: "10:00", booking_code: "BC-1004", aussenslot_start: "12:00", aussenslot_end: "13:30" },
-    { day: "Dienstag", moderator: "Hannah", room: "2", slot: "10:30", booking_code: "BC-1005", aussenslot_start: "", aussenslot_end: "" },
-    { day: "Dienstag", moderator: "Anvi", room: "3", slot: "15:00", booking_code: "BC-1006", aussenslot_start: "", aussenslot_end: "" },
-    // Mittwoch – voll
-    { day: "Mittwoch", moderator: "Favour", room: "1", slot: "09:00", booking_code: "BC-1007", aussenslot_start: "", aussenslot_end: "" },
-    { day: "Mittwoch", moderator: "Jasmin", room: "2", slot: "09:00", booking_code: "BC-1008", aussenslot_start: "11:00", aussenslot_end: "12:30" },
-    { day: "Mittwoch", moderator: "Sascha", room: "3", slot: "13:00", booking_code: "BC-1009", aussenslot_start: "", aussenslot_end: "" },
-    { day: "Mittwoch", moderator: "Alexa", room: "1", slot: "16:00", booking_code: "BC-1010", aussenslot_start: "", aussenslot_end: "" },
-    // Donnerstag – Nachmittag
-    { day: "Donnerstag", moderator: "Quynh", room: "1", slot: "14:00", booking_code: "BC-1011", aussenslot_start: "", aussenslot_end: "" },
-    { day: "Donnerstag", moderator: "Vanessa", room: "2", slot: "14:30", booking_code: "BC-1012", aussenslot_start: "16:30", aussenslot_end: "18:00" },
-    { day: "Donnerstag", moderator: "Hannah", room: "3", slot: "17:00", booking_code: "BC-1013", aussenslot_start: "", aussenslot_end: "" },
-    // Freitag – Vormittag + Nachmittag
-    { day: "Freitag", moderator: "Anvi", room: "1", slot: "09:30", booking_code: "BC-1014", aussenslot_start: "", aussenslot_end: "" },
-    { day: "Freitag", moderator: "Favour", room: "2", slot: "10:00", booking_code: "BC-1015", aussenslot_start: "12:00", aussenslot_end: "13:00" },
-    { day: "Freitag", moderator: "Jasmin", room: "1", slot: "15:00", booking_code: "BC-1016", aussenslot_start: "", aussenslot_end: "" },
-    // Samstag – Wochenende
-    { day: "Samstag", moderator: "Sascha", room: "1", slot: "11:00", booking_code: "BC-1017", aussenslot_start: "", aussenslot_end: "" },
-    { day: "Samstag", moderator: "Quynh", room: "2", slot: "11:00", booking_code: "BC-1018", aussenslot_start: "13:00", aussenslot_end: "14:30" },
-    // Sonntag – leicht
-    { day: "Sonntag", moderator: "Alexa", room: "1", slot: "12:00", booking_code: "BC-1019", aussenslot_start: "", aussenslot_end: "" },
+    // Jedes Event: 2,5h total, 45min Außenslot, keine AS-Überschneidungen pro Tag
+    // Montag – 3 Schichten (AS: 10:45-11:30, 11:45-12:30, 15:45-16:30)
+    { day: "Montag", moderator: "Sascha", room: "1", slot: "09:00", booking_code: "BC-1001", aussenslot_start: "10:45", aussenslot_end: "11:30" },
+    { day: "Montag", moderator: "Alexa", room: "2", slot: "10:00", booking_code: "BC-1002", aussenslot_start: "11:45", aussenslot_end: "12:30" },
+    { day: "Montag", moderator: "Quynh", room: "3", slot: "14:00", booking_code: "BC-1003", aussenslot_start: "15:45", aussenslot_end: "16:30" },
+    // Dienstag – 3 Schichten (AS: 11:15-12:00, 12:15-13:00, 16:45-17:30)
+    { day: "Dienstag", moderator: "Vanessa", room: "1", slot: "09:30", booking_code: "BC-1004", aussenslot_start: "11:15", aussenslot_end: "12:00" },
+    { day: "Dienstag", moderator: "Hannah", room: "2", slot: "10:30", booking_code: "BC-1005", aussenslot_start: "12:15", aussenslot_end: "13:00" },
+    { day: "Dienstag", moderator: "Anvi", room: "3", slot: "15:00", booking_code: "BC-1006", aussenslot_start: "16:45", aussenslot_end: "17:30" },
+    // Mittwoch – 4 Schichten (AS: 10:45-11:30, 11:45-12:30, 14:45-15:30, 15:45-16:30)
+    { day: "Mittwoch", moderator: "Favour", room: "1", slot: "09:00", booking_code: "BC-1007", aussenslot_start: "10:45", aussenslot_end: "11:30" },
+    { day: "Mittwoch", moderator: "Jasmin", room: "2", slot: "10:00", booking_code: "BC-1008", aussenslot_start: "11:45", aussenslot_end: "12:30" },
+    { day: "Mittwoch", moderator: "Sascha", room: "3", slot: "13:00", booking_code: "BC-1009", aussenslot_start: "14:45", aussenslot_end: "15:30" },
+    { day: "Mittwoch", moderator: "Alexa", room: "1", slot: "14:00", booking_code: "BC-1010", aussenslot_start: "15:45", aussenslot_end: "16:30" },
+    // Donnerstag – 3 Schichten (AS: 11:15-12:00, 14:45-15:30, 15:45-16:30)
+    { day: "Donnerstag", moderator: "Quynh", room: "1", slot: "09:30", booking_code: "BC-1011", aussenslot_start: "11:15", aussenslot_end: "12:00" },
+    { day: "Donnerstag", moderator: "Vanessa", room: "2", slot: "13:00", booking_code: "BC-1012", aussenslot_start: "14:45", aussenslot_end: "15:30" },
+    { day: "Donnerstag", moderator: "Hannah", room: "3", slot: "14:00", booking_code: "BC-1013", aussenslot_start: "15:45", aussenslot_end: "16:30" },
+    // Freitag – 3 Schichten (AS: 10:45-11:30, 11:45-12:30, 16:45-17:30)
+    { day: "Freitag", moderator: "Anvi", room: "1", slot: "09:00", booking_code: "BC-1014", aussenslot_start: "10:45", aussenslot_end: "11:30" },
+    { day: "Freitag", moderator: "Favour", room: "2", slot: "10:00", booking_code: "BC-1015", aussenslot_start: "11:45", aussenslot_end: "12:30" },
+    { day: "Freitag", moderator: "Jasmin", room: "1", slot: "15:00", booking_code: "BC-1016", aussenslot_start: "16:45", aussenslot_end: "17:30" },
+    // Samstag – 2 Schichten (AS: 12:45-13:30, 13:45-14:30)
+    { day: "Samstag", moderator: "Sascha", room: "1", slot: "11:00", booking_code: "BC-1017", aussenslot_start: "12:45", aussenslot_end: "13:30" },
+    { day: "Samstag", moderator: "Quynh", room: "2", slot: "12:00", booking_code: "BC-1018", aussenslot_start: "13:45", aussenslot_end: "14:30" },
+    // Sonntag – 1 Schicht (AS: 13:45-14:30)
+    { day: "Sonntag", moderator: "Alexa", room: "1", slot: "12:00", booking_code: "BC-1019", aussenslot_start: "13:45", aussenslot_end: "14:30" },
   ],
   support: [
     { day: "Montag", person: "Hamed", start: "14:00", end: "22:00" },
