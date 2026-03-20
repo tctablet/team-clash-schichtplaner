@@ -18,7 +18,7 @@ const SLIDER_MIN = 8.5; // 08:30
 const SLIDER_MAX = 24; // 00:00
 const SLIDER_DEFAULT = [8.5, 24]; // 08:30 - 00:00
 const STORAGE_KEY = "tc_availability";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzo49x_AiRLe_kX0lO56KgeyHGFNoBTAQusLOgZSoNT5CpAHkdThe_T2AUNJxMFR-1p/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwa8NRqz-TFDcuY925IGCQ3KgEw1eduxtKqRCLJbq_JCnwtrqzJtJ8mDo7R9gH48vED/exec";
 const DAY_MAP = { montag: "Mo", dienstag: "Di", mittwoch: "Mi", donnerstag: "Do", freitag: "Fr", samstag: "Sa", sonntag: "So" };
 function roomName(id) { return /^\d+(\.\d+)?$/.test(String(id)) ? `Raum ${Math.floor(id)}` : String(id); }
 
