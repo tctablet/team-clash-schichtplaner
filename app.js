@@ -1449,7 +1449,8 @@ function renderAgendaView(planData, monday, container, filterName, ctx) {
     events.forEach((ev) => {
       const { shift, startMin, endMin } = ev;
       const startTime = ev.type === "sup" ? formatTimeFromValue(shift.start) : formatTimeFromValue(shift.slot);
-      const endTime = ev.type === "sup" ? formatTimeFromValue(shift.end) : formatTimeFromValue(shift.aussenslot_end || "");
+      const endTime = ev.type === "sup" ? formatTimeFromValue(shift.end)
+        : (showAussenSlots ? "" : formatTimeFromValue(shift.aussenslot_end || ""));
       const duration = endMin - startMin;
       const durationStr = `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ""}`;
 
@@ -1486,9 +1487,33 @@ function renderAgendaView(planData, monday, container, filterName, ctx) {
               ${room && !filterName ? `<span class="agenda-card-room">${room}</span>` : ""}
               ${shift.booking_code ? `<span class="agenda-card-code">${shift.booking_code}</span>` : ""}
             </div>
-            ${hasAussen ? `<div class="agenda-card-aussen"><span class="legend-dot aussen"></span> ${aussenStr}</div>` : ""}
+            ${hasAussen && !showAussenSlots ? `<div class="agenda-card-aussen"><span class="legend-dot aussen"></span> ${aussenStr}</div>` : ""}
           </div>
         </div>`;
+
+        // Separate Außenslot card when AS mode is on
+        if (hasAussen && showAussenSlots) {
+          const asStart = formatTimeFromValue(shift.aussenslot_start);
+          const asEnd = formatTimeFromValue(shift.aussenslot_end);
+          const asStartMin = parseTimeToMinutes(shift.aussenslot_start);
+          const asEndMin = parseTimeToMinutes(shift.aussenslot_end);
+          const asDur = asEndMin - asStartMin;
+          const asDurStr = `${Math.floor(asDur / 60)}h${asDur % 60 > 0 ? ` ${asDur % 60}min` : ""}`;
+          html += `<div class="agenda-card agenda-aussen" style="${personStyle(shift.moderator)}">
+            <div class="agenda-card-accent" style="background:#2dd4bf"></div>
+            <div class="agenda-card-body">
+              <div class="agenda-card-header">
+                <span class="agenda-card-time">${asStart} – ${asEnd}</span>
+                <span class="agenda-card-duration">${asDurStr}</span>
+              </div>
+              <div class="agenda-card-title">${shift.moderator || ""}</div>
+              <div class="agenda-card-meta">
+                <span class="agenda-card-badge" style="background:rgba(45,212,191,0.15);color:#2dd4bf">Außenslot</span>
+                ${room ? `<span class="agenda-card-room">${room}</span>` : ""}
+              </div>
+            </div>
+          </div>`;
+        }
       }
     });
   }
