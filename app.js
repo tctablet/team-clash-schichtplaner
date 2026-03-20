@@ -1796,7 +1796,7 @@ function renderAvailTable() {
   if (isMobileAvail()) {
     // Mobile: day tabs + card list
     tableEl.style.display = "none";
-    listEl.style.display = "";
+    listEl.style.display = "block";
     renderAvailDayTabs();
 
     const dk = dayKeys[availDayIdx];
