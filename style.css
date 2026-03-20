@@ -2146,7 +2146,7 @@ header {
   }
 
   #step-admin {
-    overflow-x: hidden;
+    overflow-x: clip;
     padding-left: 0;
     padding-right: 0;
   }
@@ -2218,7 +2218,7 @@ header {
   }
 
   #step-shifts {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   #step-shifts .time-grid {
