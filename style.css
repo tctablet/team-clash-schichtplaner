@@ -983,6 +983,111 @@ header {
   display: block;
 }
 
+/* ===== Availability Overview ===== */
+.avail-type-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.avail-type-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.avail-type-btn:hover { color: var(--text-muted); }
+
+.avail-type-btn.active {
+  background: var(--bg-card);
+  color: var(--cyan);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.avail-overview-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.avail-loading {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px 0;
+  font-size: 0.9rem;
+}
+
+.avail-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-size: 0.82rem;
+}
+
+.avail-table th {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 8px;
+  text-align: center;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border);
+}
+
+.avail-table th:first-child { text-align: left; padding-left: 14px; }
+
+.avail-table td {
+  padding: 8px;
+  border-bottom: 1px solid rgba(0, 210, 239, 0.05);
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.avail-table tr:last-child td { border-bottom: none; }
+
+.avail-name {
+  font-weight: 600;
+  text-align: left !important;
+  padding-left: 14px !important;
+  color: var(--text-light);
+}
+
+.avail-cell { border-radius: 4px; }
+
+.avail-full {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.1);
+}
+
+.avail-no {
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+.avail-partial {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  font-size: 0.75rem;
+}
+
 /* ===== Admin Full-Width Layout ===== */
 #step-admin {
   max-width: none;
@@ -1973,5 +2078,18 @@ header {
 
   .agenda-tab-day {
     font-size: 0.75rem;
+  }
+
+  .avail-table {
+    font-size: 0.72rem;
+  }
+
+  .avail-table th,
+  .avail-table td {
+    padding: 6px 4px;
+  }
+
+  .avail-partial {
+    font-size: 0.65rem;
   }
 }

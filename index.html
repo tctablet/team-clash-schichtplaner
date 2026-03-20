@@ -48,6 +48,7 @@
       <!-- Admin Tabs -->
       <div class="admin-tabs">
         <button class="admin-tab active" data-tab="admin-overview">Wochenplan</button>
+        <button class="admin-tab" data-tab="admin-avail">Verfügbarkeiten</button>
         <button class="admin-tab" data-tab="admin-codes">Codes</button>
       </div>
 
@@ -67,6 +68,24 @@
         <div class="agenda-day-tabs" id="agenda-day-tabs-admin"></div>
         <div class="admin-overview-calendar" id="admin-calendar">
           <div class="shift-loading">Lade Schichtplan...</div>
+        </div>
+      </div>
+
+      <!-- Tab: Availability Overview -->
+      <div class="admin-tab-content" id="admin-avail">
+        <div class="shift-week-nav">
+          <button class="cal-nav" id="avail-prev">&larr;</button>
+          <h3 id="avail-week-title">KW --</h3>
+          <button class="cal-nav" id="avail-next">&rarr;</button>
+        </div>
+        <div class="shift-date-range" id="avail-date-range"></div>
+        <div class="avail-type-toggle">
+          <button class="avail-type-btn active" data-type="weekly">Wöchentlich</button>
+          <button class="avail-type-btn" data-type="general">Generell</button>
+        </div>
+        <div class="avail-overview-wrap">
+          <div class="avail-loading" id="avail-loading">Lade Verfügbarkeiten...</div>
+          <table class="avail-table" id="avail-table"></table>
         </div>
       </div>
 

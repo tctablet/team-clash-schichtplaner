@@ -66,6 +66,10 @@ let lastPlanDataShifts = null;
 let lastMondayShifts = null;
 let lastPlanDataAdmin = null;
 let lastMondayAdmin = null;
+let availWeekKW = null;
+let availWeekYear = null;
+let availViewType = "weekly"; // "weekly" or "general"
+let availCache = {}; // { "KW_YEAR": { weekly: [...], general: [...] } }
 
 // ===== Init =====
 document.addEventListener("DOMContentLoaded", () => {
@@ -382,12 +386,28 @@ function bindNavigation() {
       document.querySelectorAll(".admin-tab-content").forEach((c) => c.classList.remove("active"));
       tab.classList.add("active");
       document.getElementById(tab.dataset.tab).classList.add("active");
+      if (tab.dataset.tab === "admin-avail") {
+        if (!availWeekKW) initAvailWeek();
+        else loadAvailData();
+      }
     });
   });
 
   // Admin calendar nav
   document.getElementById("admin-prev").addEventListener("click", () => navigateAdminWeek(-1));
   document.getElementById("admin-next").addEventListener("click", () => navigateAdminWeek(1));
+
+  // Availability overview nav
+  document.getElementById("avail-prev").addEventListener("click", () => navigateAvailWeek(-1));
+  document.getElementById("avail-next").addEventListener("click", () => navigateAvailWeek(1));
+  document.querySelectorAll(".avail-type-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".avail-type-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      availViewType = btn.dataset.type;
+      renderAvailTable();
+    });
+  });
 
   // General section toggle
   const btnEdit = document.getElementById("btn-edit-general");
@@ -1637,4 +1657,103 @@ function timeToHours(str) {
 
 function formatTimeRange(vals) {
   return `${hoursToTime(vals[0])} – ${hoursToTime(vals[1])}`;
+}
+
+// ===== Availability Overview (Admin) =====
+function initAvailWeek() {
+  const now = new Date();
+  availWeekKW = getISOWeek(now);
+  availWeekYear = getISOWeekYear(now);
+  loadAvailData();
+}
+
+function navigateAvailWeek(delta) {
+  availWeekKW += delta;
+  const maxWeeks = getISOWeeksInYear(availWeekYear);
+  if (availWeekKW > maxWeeks) { availWeekKW = 1; availWeekYear++; }
+  else if (availWeekKW < 1) { availWeekYear--; availWeekKW = getISOWeeksInYear(availWeekYear); }
+  loadAvailData();
+}
+
+async function loadAvailData() {
+  const titleEl = document.getElementById("avail-week-title");
+  const rangeEl = document.getElementById("avail-date-range");
+  const loadingEl = document.getElementById("avail-loading");
+  const tableEl = document.getElementById("avail-table");
+
+  titleEl.textContent = `KW ${availWeekKW}`;
+  const monday = getMondayOfISOWeek(availWeekKW, availWeekYear);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  rangeEl.textContent = `${formatDate(monday)} – ${formatDate(sunday)}`;
+
+  const cacheKey = `${availWeekKW}_${availWeekYear}`;
+  if (availCache[cacheKey]) {
+    renderAvailTable();
+    return;
+  }
+
+  loadingEl.style.display = "block";
+  tableEl.style.display = "none";
+
+  try {
+    const wk = weekKeyStr(availWeekKW, availWeekYear);
+    const [weeklyRes, generalRes] = await Promise.all([
+      gasPost("get_parsed_availability", { week: wk }),
+      gasPost("get_parsed_availability", { week: "GENERAL" }),
+    ]);
+    availCache[cacheKey] = {
+      weekly: weeklyRes.success && Array.isArray(weeklyRes.data) ? weeklyRes.data : [],
+      general: generalRes.success && Array.isArray(generalRes.data) ? generalRes.data : [],
+    };
+  } catch (err) {
+    console.error("Failed to load availability:", err);
+    availCache[cacheKey] = { weekly: [], general: [] };
+  }
+
+  loadingEl.style.display = "none";
+  tableEl.style.display = "";
+  renderAvailTable();
+}
+
+function renderAvailTable() {
+  const tableEl = document.getElementById("avail-table");
+  const cacheKey = `${availWeekKW}_${availWeekYear}`;
+  const cached = availCache[cacheKey];
+  if (!cached) return;
+
+  const dayKeys = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const entries = availViewType === "weekly" ? cached.weekly : cached.general;
+
+  let html = `<thead><tr><th>Name</th>`;
+  dayKeys.forEach(d => { html += `<th>${d}</th>`; });
+  html += `</tr></thead><tbody>`;
+
+  TEAM.forEach(member => {
+    const entry = entries.find(e => e.Name === member.name);
+    const fallback = availViewType === "general" && GENERAL_DEFAULTS[member.name];
+
+    html += `<tr><td class="avail-name">${member.name}</td>`;
+    dayKeys.forEach(d => {
+      let val = entry ? entry[d] : null;
+      if (!val && fallback) val = fallback[d];
+      html += `<td class="avail-cell ${availCellClass(val)}">${availCellLabel(val)}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody>`;
+  tableEl.innerHTML = html;
+}
+
+function availCellClass(val) {
+  if (!val || val === "Nicht") return "avail-no";
+  if (val === "Voll") return "avail-full";
+  return "avail-partial";
+}
+
+function availCellLabel(val) {
+  if (!val || val === "Nicht") return "—";
+  if (val === "Voll") return "Voll";
+  return val.replace("-", "–");
 }
