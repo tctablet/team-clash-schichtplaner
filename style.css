@@ -2140,13 +2140,31 @@ header {
     margin-right: auto;
   }
 
+  .admin-tabs {
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .admin-tab {
+    padding: 8px 8px;
+    font-size: 0.78rem;
+  }
+
+  .agenda-day-tabs {
+    justify-content: center;
+  }
+
   .agenda-day-tab {
-    padding: 6px 10px;
-    min-width: 46px;
+    padding: 6px 7px;
+    min-width: 40px;
   }
 
   .agenda-tab-day {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+  }
+
+  .agenda-tab-date {
+    font-size: 0.55rem;
   }
 
   .avail-table {
