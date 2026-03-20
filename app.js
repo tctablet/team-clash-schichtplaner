@@ -806,7 +806,7 @@ function getShiftStartEnd(shift) {
   return { startMin, endMin };
 }
 
-function renderTimeGrid(plan, monday, container, filterName, supportEntries) {
+function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx) {
   supportEntries = supportEntries || [];
 
   // Build a lookup: day -> support entry { day, person, start, end }
@@ -881,9 +881,14 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries) {
     linesHtml += `<div class="tg-line" style="top:${pct}%"></div>`;
   }
 
+  // On mobile grid: show only selected day via day tabs
+  const isMobileGrid = ctx && window.innerWidth < 768;
+  const mobileDay = isMobileGrid ? (ctx === "shifts" ? agendaDayShifts : agendaDayAdmin) : null;
+
   // Build day columns
   let colsHtml = "";
   dayShorts.forEach((ds, i) => {
+    if (isMobileGrid && i !== mobileDay) return;
     const dayDate = new Date(monday);
     dayDate.setUTCDate(monday.getUTCDate() + i);
     const dateStr = formatDate(dayDate);
@@ -1099,14 +1104,16 @@ function renderShiftCalendar(planData, monday) {
   lastPlanDataShifts = planData;
   lastMondayShifts = monday;
   const cal = document.getElementById("shift-calendar");
+  const isMobile = window.innerWidth < 768;
   if (viewModeShifts === "agenda") {
     renderAgendaView(planData, monday, cal, selectedModerator, "shifts");
   } else {
-    renderTimeGrid(planData.plan, monday, cal, selectedModerator, planData.support);
+    if (isMobile) renderDayTabs("shifts");
+    renderTimeGrid(planData.plan, monday, cal, selectedModerator, planData.support, "shifts");
   }
-  // Hide/show day tabs based on view mode
+  // Hide/show day tabs: visible for agenda always, visible for grid on mobile
   const tabs = document.getElementById("agenda-day-tabs-shifts");
-  if (tabs) tabs.style.display = viewModeShifts === "agenda" ? "" : "none";
+  if (tabs) tabs.style.display = (viewModeShifts === "agenda" || (viewModeShifts === "grid" && isMobile)) ? "" : "none";
 }
 
 function renderShiftCard(shift) {
@@ -1236,13 +1243,15 @@ function renderAdminCalendar(planData, monday) {
   lastPlanDataAdmin = planData;
   lastMondayAdmin = monday;
   const cal = document.getElementById("admin-calendar");
+  const isMobile = window.innerWidth < 768;
   if (viewModeAdmin === "agenda") {
     renderAgendaView(planData, monday, cal, null, "admin");
   } else {
-    renderTimeGrid(planData.plan, monday, cal, null, planData.support);
+    if (isMobile) renderDayTabs("admin");
+    renderTimeGrid(planData.plan, monday, cal, null, planData.support, "admin");
   }
   const tabs = document.getElementById("agenda-day-tabs-admin");
-  if (tabs) tabs.style.display = viewModeAdmin === "agenda" ? "" : "none";
+  if (tabs) tabs.style.display = (viewModeAdmin === "agenda" || (viewModeAdmin === "grid" && isMobile)) ? "" : "none";
 }
 
 // ===== Agenda View =====
@@ -1291,7 +1300,10 @@ function initViewToggles() {
       const diff = e.changedTouches[0].clientX - startX;
       const ctx = id === "shift-calendar" ? "shifts" : "admin";
       const currentMode = ctx === "shifts" ? viewModeShifts : viewModeAdmin;
-      if (currentMode !== "agenda" || Math.abs(diff) < 50) return;
+      const isMobile = window.innerWidth < 768;
+      // Swipe works for agenda always, and for grid on mobile
+      if (Math.abs(diff) < 50) return;
+      if (currentMode !== "agenda" && !(currentMode === "grid" && isMobile)) return;
       const delta = diff < 0 ? 1 : -1;
       navigateAgendaDay(ctx, delta);
     }, { passive: true });

@@ -2161,4 +2161,30 @@ header {
   .avail-partial {
     font-size: 0.65rem;
   }
+
+  /* Grid single-day mode on mobile */
+  .time-grid {
+    overflow-x: hidden;
+  }
+
+  .tg-col {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .tg-col-header {
+    display: none;
+  }
+
+  .tg-event-label {
+    font-size: 0.72rem;
+  }
+
+  .tg-event-time {
+    font-size: 0.68rem;
+  }
+
+  .tg-event-room {
+    font-size: 0.65rem;
+  }
 }
