@@ -814,7 +814,7 @@ function getShiftStartEnd(shift) {
   let startMin = parseTimeToMinutes(shift.slot);
   let endMin;
 
-  if (shift.aussenslot_end && !showAussenSlots) {
+  if (shift.aussenslot_end) {
     endMin = parseTimeToMinutes(shift.aussenslot_end);
   } else {
     endMin = startMin != null ? startMin + DEFAULT_SLOT_DURATION : null;
@@ -962,39 +962,32 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
       const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
       const startTime = formatTimeFromValue(shift.slot);
 
-      if (showAussenSlots) {
-        // Simplified mod card
-        eventsHtml += `<div class="tg-event tg-mod ${hasAussen ? "has-as" : ""}" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="${shift.booking_code || ""}">
-          <div class="tg-event-content">
-            <span class="tg-event-label">${shift.moderator || ""}</span>
-          </div>
-        </div>`;
-        // Separate Außenslot overlay block
-        if (hasAussen) {
-          const asStart = parseTimeToMinutes(shift.aussenslot_start);
-          const asEnd = parseTimeToMinutes(shift.aussenslot_end);
-          if (asStart != null && asEnd != null) {
-            const asTopPct = ((asStart - gridStartH * 60) / (gridHours * 60)) * 100;
-            const asHeightPct = ((asEnd - asStart) / (gridHours * 60)) * 100;
-            const asStartTime = formatTimeFromValue(shift.aussenslot_start);
-            const asEndTime = formatTimeFromValue(shift.aussenslot_end);
-            aussenHtml += `<div class="tg-event tg-aussen" style="top:${asTopPct}%;height:${asHeightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="AS: ${shift.moderator}">
-              <div class="tg-event-content">
-                <span class="tg-event-time">${asStartTime}–${asEndTime}</span>
-                <span class="tg-event-label">${shift.moderator || ""}</span>
-              </div>
-            </div>`;
-          }
+      // Full-size mod event (always same size regardless of AS toggle)
+      eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="${shift.booking_code || ""}">
+        <div class="tg-event-content">
+          <span class="tg-event-time">${startTime}</span>
+          <span class="tg-event-label">${label}</span>
+          ${room && !filterName ? `<span class="tg-event-room">${room}</span>` : ""}
+          ${hasAussen && !showAussenSlots ? `<div class="tg-aussen-dot" title="AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}"></div>` : ""}
+        </div>
+      </div>`;
+
+      // Außenslot overlay block (only when AS toggle is on)
+      if (showAussenSlots && hasAussen) {
+        const asStart = parseTimeToMinutes(shift.aussenslot_start);
+        const asEnd = parseTimeToMinutes(shift.aussenslot_end);
+        if (asStart != null && asEnd != null) {
+          const asTopPct = ((asStart - gridStartH * 60) / (gridHours * 60)) * 100;
+          const asHeightPct = ((asEnd - asStart) / (gridHours * 60)) * 100;
+          const asStartTime = formatTimeFromValue(shift.aussenslot_start);
+          const asEndTime = formatTimeFromValue(shift.aussenslot_end);
+          aussenHtml += `<div class="tg-event tg-aussen" style="top:${asTopPct}%;height:${asHeightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="AS: ${shift.moderator}">
+            <div class="tg-event-content">
+              <span class="tg-event-time">${asStartTime}–${asEndTime}</span>
+              <span class="tg-event-label">${shift.moderator || ""}</span>
+            </div>
+          </div>`;
         }
-      } else {
-        eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="${shift.booking_code || ""}">
-          <div class="tg-event-content">
-            <span class="tg-event-time">${startTime}</span>
-            <span class="tg-event-label">${label}</span>
-            ${room && !filterName ? `<span class="tg-event-room">${room}</span>` : ""}
-            ${hasAussen ? `<div class="tg-aussen-dot" title="AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}"></div>` : ""}
-          </div>
-        </div>`;
       }
     });
 
@@ -1455,7 +1448,7 @@ function renderAgendaView(planData, monday, container, filterName, ctx) {
       const { shift, startMin, endMin } = ev;
       const startTime = ev.type === "sup" ? formatTimeFromValue(shift.start) : formatTimeFromValue(shift.slot);
       const endTime = ev.type === "sup" ? formatTimeFromValue(shift.end)
-        : (showAussenSlots ? "" : formatTimeFromValue(shift.aussenslot_end || ""));
+        : formatTimeFromValue(shift.aussenslot_end || "");
       const duration = endMin - startMin;
       const durationStr = `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ""}`;
 
