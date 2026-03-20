@@ -900,34 +900,16 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
     // Find support entry for this day
     const daySup = supportByDay[dayFull[i].toLowerCase()] || supportByDay[ds.toLowerCase()];
 
-    // Build mod/booking events
-    const eventData = dayShifts.map((shift) => {
+    // Build mod events (separate from support)
+    const modEvents = dayShifts.map((shift) => {
       const { startMin, endMin } = getShiftStartEnd(shift, null);
       return { shift, startMin, endMin, type: "mod" };
     });
+    modEvents.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
 
-    // Add support event for this day (if relevant for the user or admin view)
-    if (daySup && daySup.start && daySup.end) {
-      const showSupport = !filterName || daySup.person === filterName;
-      if (showSupport) {
-        const st = parseTimeToMinutes(daySup.start);
-        const en = parseTimeToMinutes(daySup.end);
-        if (st != null && en != null) {
-          eventData.push({
-            shift: daySup,
-            startMin: st,
-            endMin: en,
-            type: "sup"
-          });
-        }
-      }
-    }
-
-    eventData.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
-
-    // Assign columns to overlapping events
+    // Assign columns to overlapping mod events (no limit)
     const columns = [];
-    eventData.forEach((ev) => {
+    modEvents.forEach((ev) => {
       let placed = false;
       for (let c = 0; c < columns.length; c++) {
         if (ev.startMin >= columns[c]) {
@@ -943,98 +925,65 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
       }
     });
     const totalCols = columns.length || 1;
-    const MAX_VISIBLE_COLS = 2;
 
-    // Group overlapping events into clusters for +N more chips
-    const overflowClusters = [];
-    if (totalCols > MAX_VISIBLE_COLS) {
-      // Find time ranges where 3+ events overlap
-      const sorted = [...eventData].sort((a, b) => a.startMin - b.startMin);
-      sorted.forEach((ev) => {
-        if (ev.col >= MAX_VISIBLE_COLS) {
-          // Find existing cluster this event fits into
-          let merged = false;
-          for (const cluster of overflowClusters) {
-            if (ev.startMin < cluster.endMin && ev.endMin > cluster.startMin) {
-              cluster.events.push(ev);
-              cluster.startMin = Math.min(cluster.startMin, ev.startMin);
-              cluster.endMin = Math.max(cluster.endMin, ev.endMin);
-              merged = true;
-              break;
-            }
-          }
-          if (!merged) {
-            overflowClusters.push({ startMin: ev.startMin, endMin: ev.endMin, events: [ev] });
-          }
-        }
-      });
-    }
-
+    // Render mod events — all visible, equal-width columns
     let eventsHtml = "";
-    const displayCols = Math.min(totalCols, MAX_VISIBLE_COLS);
-    eventData.forEach((ev) => {
-      if (totalCols > MAX_VISIBLE_COLS && ev.col >= MAX_VISIBLE_COLS) return; // hidden in overflow
-
+    modEvents.forEach((ev) => {
       const { shift, startMin, endMin } = ev;
       const topPct = ((startMin - gridStartH * 60) / (gridHours * 60)) * 100;
       const heightPct = ((endMin - startMin) / (gridHours * 60)) * 100;
-      const leftPct = (ev.col / displayCols) * 100;
-      const widthPct = (1 / displayCols) * 100;
+      const leftPct = (ev.col / totalCols) * 100;
+      const widthPct = (1 / totalCols) * 100;
 
-      if (ev.type === "sup") {
-        const supPerson = shift.person || "";
-        const supStart = formatTimeFromValue(shift.start);
-        const supEnd = formatTimeFromValue(shift.end);
-        eventsHtml += `<div class="tg-event tg-sup" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%" title="Support: ${supPerson}">
-          <div class="tg-event-content">
-            <span class="tg-event-time">${supStart}–${supEnd}</span>
-            <span class="tg-event-label">${supPerson}</span>
-            <span class="tg-event-room">Support</span>
-          </div>
-        </div>`;
-      } else {
-        const room = shift.room ? roomName(shift.room) : "";
-        let label = filterName ? (room || formatTimeFromValue(shift.slot)) : (shift.moderator || "");
-        const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
-        const startTime = formatTimeFromValue(shift.slot);
+      const room = shift.room ? roomName(shift.room) : "";
+      let label = filterName ? (room || formatTimeFromValue(shift.slot)) : (shift.moderator || "");
+      const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
+      const startTime = formatTimeFromValue(shift.slot);
 
-        eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%" title="${shift.booking_code || ""}">
-          <div class="tg-event-content">
-            <span class="tg-event-time">${startTime}</span>
-            <span class="tg-event-label">${label}</span>
-            ${room && !filterName ? `<span class="tg-event-room">${room}</span>` : ""}
-            ${hasAussen ? `<div class="tg-aussen-dot" title="AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}"></div>` : ""}
-          </div>
-        </div>`;
-      }
+      eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%" title="${shift.booking_code || ""}">
+        <div class="tg-event-content">
+          <span class="tg-event-time">${startTime}</span>
+          <span class="tg-event-label">${label}</span>
+          ${room && !filterName ? `<span class="tg-event-room">${room}</span>` : ""}
+          ${hasAussen ? `<div class="tg-aussen-dot" title="AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}"></div>` : ""}
+        </div>
+      </div>`;
     });
 
-    // Render +N more chips for overflow clusters
-    overflowClusters.forEach((cluster) => {
-      const topPct = ((cluster.startMin - gridStartH * 60) / (gridHours * 60)) * 100;
-      const heightPct = ((cluster.endMin - cluster.startMin) / (gridHours * 60)) * 100;
-      const evIds = cluster.events.map((_, idx) => idx).join(",");
-      const popoverData = JSON.stringify(cluster.events.map((ev) => {
-        if (ev.type === "sup") {
-          return { type: "sup", person: ev.shift.person || "", start: formatTimeFromValue(ev.shift.start), end: formatTimeFromValue(ev.shift.end) };
+    // Render support as a vertical band on the right edge (like Godot app)
+    let supportBandHtml = "";
+    if (daySup && daySup.start && daySup.end) {
+      const showSupport = !filterName || daySup.person === filterName;
+      if (showSupport) {
+        const st = parseTimeToMinutes(daySup.start);
+        const en = parseTimeToMinutes(daySup.end);
+        if (st != null && en != null) {
+          const topPct = ((st - gridStartH * 60) / (gridHours * 60)) * 100;
+          const heightPct = ((en - st) / (gridHours * 60)) * 100;
+          const supPerson = daySup.person || "";
+          const supStart = formatTimeFromValue(daySup.start);
+          const supEnd = formatTimeFromValue(daySup.end);
+          supportBandHtml = `<div class="tg-support-band" title="Support: ${supPerson} ${supStart}–${supEnd}">
+            <div class="tg-support-bg"></div>
+            <div class="tg-support-fill" style="top:${topPct}%;height:${heightPct}%">
+              <span class="tg-support-name">${supPerson}</span>
+              <span class="tg-support-time">${supStart}–${supEnd}</span>
+            </div>
+          </div>`;
         }
-        return {
-          type: "mod", moderator: ev.shift.moderator || "", room: ev.shift.room ? roomName(ev.shift.room) : "",
-          slot: formatTimeFromValue(ev.shift.slot), code: ev.shift.booking_code || "",
-          aussen: ev.shift.aussenslot_start ? `${formatTimeFromValue(ev.shift.aussenslot_start)}–${formatTimeFromValue(ev.shift.aussenslot_end)}` : ""
-        };
-      })).replace(/"/g, "&quot;");
-      eventsHtml += `<div class="tg-more-chip" style="top:${topPct}%;height:${Math.max(heightPct, 2.5)}%" data-events="${popoverData}">+${cluster.events.length}</div>`;
-    });
+      }
+    }
 
+    const hasSupBand = supportBandHtml !== "";
     colsHtml += `<div class="tg-col">
       <div class="tg-col-header">
         <span class="tg-col-day">${ds}</span>
         <span class="tg-col-date">${dateStr}</span>
       </div>
-      <div class="tg-col-body">
+      <div class="tg-col-body${hasSupBand ? " has-support" : ""}">
         ${linesHtml}
-        ${eventsHtml}
+        <div class="tg-events-area">${eventsHtml}</div>
+        ${supportBandHtml}
       </div>
     </div>`;
   });
@@ -1048,56 +997,6 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
     <div class="tg-hours">${hoursHtml}</div>
     <div class="tg-cols">${colsHtml}</div>
   </div>${unassignedHint}`;
-
-  // Bind +N more chip click handlers
-  container.querySelectorAll(".tg-more-chip").forEach((chip) => {
-    chip.addEventListener("click", (e) => {
-      e.stopPropagation();
-      // Remove any existing popover
-      document.querySelectorAll(".tg-popover").forEach((p) => p.remove());
-
-      const events = JSON.parse(chip.dataset.events);
-      let popHtml = '<div class="tg-popover-title">Weitere Schichten</div>';
-      events.forEach((ev) => {
-        if (ev.type === "sup") {
-          popHtml += `<div class="tg-popover-item tg-pop-sup">
-            <span class="tg-pop-time">${ev.start}–${ev.end}</span>
-            <span class="tg-pop-name">${ev.person}</span>
-            <span class="agenda-card-badge sup">Support</span>
-          </div>`;
-        } else {
-          popHtml += `<div class="tg-popover-item tg-pop-mod">
-            <span class="tg-pop-time">${ev.slot}${ev.aussen ? "" : ""}</span>
-            <span class="tg-pop-name">${ev.moderator}</span>
-            ${ev.room ? `<span class="tg-pop-room">${ev.room}</span>` : ""}
-            ${ev.aussen ? `<span class="tg-pop-aussen">AS ${ev.aussen}</span>` : ""}
-          </div>`;
-        }
-      });
-
-      const popover = document.createElement("div");
-      popover.className = "tg-popover";
-      popover.innerHTML = popHtml;
-
-      // Position near the chip
-      const chipRect = chip.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      popover.style.position = "fixed";
-      popover.style.left = `${Math.min(chipRect.left, window.innerWidth - 240)}px`;
-      popover.style.top = `${Math.min(chipRect.bottom + 4, window.innerHeight - 200)}px`;
-      popover.style.zIndex = "100";
-      document.body.appendChild(popover);
-
-      // Close on outside click
-      const closePopover = (evt) => {
-        if (!popover.contains(evt.target)) {
-          popover.remove();
-          document.removeEventListener("click", closePopover);
-        }
-      };
-      setTimeout(() => document.addEventListener("click", closePopover), 0);
-    });
-  });
 }
 
 function renderShiftCalendar(planData, monday) {

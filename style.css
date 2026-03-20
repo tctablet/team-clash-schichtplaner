@@ -1470,6 +1470,72 @@ header {
   border-left: 3px solid var(--purple);
 }
 
+/* Support band (right edge, like Godot app) */
+.tg-support-band {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 100%;
+  z-index: 3;
+}
+
+.tg-support-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(58, 59, 90, 0.4);
+  border-radius: 3px;
+}
+
+.tg-support-fill {
+  position: absolute;
+  left: 2px;
+  width: calc(100% - 4px);
+  background: rgba(139, 92, 246, 0.45);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.tg-support-name {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--purple);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+  overflow: hidden;
+  max-height: 80%;
+}
+
+.tg-support-time {
+  font-size: 0.4rem;
+  color: rgba(139, 92, 246, 0.8);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+}
+
+/* Events area shrinks when support band is present */
+.tg-events-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+}
+
+.has-support .tg-events-area {
+  right: 30px;
+}
+
 .tg-event-content {
   position: relative;
   z-index: 1;
