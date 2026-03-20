@@ -2145,8 +2145,13 @@ header {
     padding-right: 12px;
   }
 
+  #step-admin {
+    overflow-x: hidden;
+  }
+
   #step-admin .time-grid {
-    min-width: 0;
+    min-width: 0 !important;
+    max-width: 100%;
   }
 
   #step-admin .tg-col {
@@ -2195,11 +2200,18 @@ header {
 
   /* Grid single-day mode on mobile */
   .time-grid {
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    max-width: 100%;
+  }
+
+  .tg-cols {
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 45px);
   }
 
   .tg-col {
-    min-width: 0;
+    min-width: 0 !important;
     flex: 1 1 100%;
   }
 
