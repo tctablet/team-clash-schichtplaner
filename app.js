@@ -41,6 +41,22 @@ const MONTH_NAMES = [
   "Juli", "August", "September", "Oktober", "November", "Dezember",
 ];
 
+// ===== Person Colors (from Godot app) =====
+const MODERATOR_COLORS = {
+  "Sascha": "#7c6aff",
+  "Alexa": "#4d94ff",
+  "Quynh": "#06b6d4",
+  "Vanessa": "#a855f7",
+  "Hannah": "#ec4899",
+  "Anvi": "#f59e0b",
+  "Favour": "#10b981",
+  "Jasmin": "#84cc16",
+  "Hamed": "#ef4444",
+  "Rehan": "#f97316",
+};
+function personColor(name) { return MODERATOR_COLORS[name] || "var(--cyan)"; }
+function personStyle(name) { return `--person-color:${personColor(name)}`; }
+
 // ===== State =====
 let currentStep = 1;
 let selectedModerator = null;
@@ -721,6 +737,10 @@ async function loadAndRenderShifts() {
   const cal = document.getElementById("shift-calendar");
   cal.innerHTML = '<div class="shift-loading">Lade Schichtplan...</div>';
 
+  // Inject test week data for KW 13/2025
+  const testKey = weekKeyStr(TEST_WEEK_KW, TEST_WEEK_YEAR);
+  if (!shiftPlanCache[testKey]) shiftPlanCache[testKey] = TEST_PLAN_DATA;
+
   let planData = { plan: [], support: [] };
   try {
     if (shiftPlanCache[weekKey]) {
@@ -940,7 +960,7 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
       const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
       const startTime = formatTimeFromValue(shift.slot);
 
-      eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%" title="${shift.booking_code || ""}">
+      eventsHtml += `<div class="tg-event tg-mod" style="top:${topPct}%;height:${heightPct}%;left:${leftPct}%;width:${widthPct}%;${personStyle(shift.moderator)}" title="${shift.booking_code || ""}">
         <div class="tg-event-content">
           <span class="tg-event-time">${startTime}</span>
           <span class="tg-event-label">${label}</span>
@@ -963,9 +983,9 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
           const supPerson = daySup.person || "";
           const supStart = formatTimeFromValue(daySup.start);
           const supEnd = formatTimeFromValue(daySup.end);
-          supportBandHtml = `<div class="tg-support-band" title="Support: ${supPerson} ${supStart}–${supEnd}">
+          supportBandHtml = `<div class="tg-support-band" style="${personStyle(supPerson)}" title="Support: ${supPerson} ${supStart}–${supEnd}">
             <div class="tg-support-bg"></div>
-            <div class="tg-support-fill" style="top:${topPct}%;height:${heightPct}%">
+            <div class="tg-support-fill" style="top:${topPct}%;height:${heightPct}%;${personStyle(supPerson)}">`
               <span class="tg-support-name">${supPerson}</span>
               <span class="tg-support-time">${supStart}–${supEnd}</span>
             </div>
@@ -1027,7 +1047,7 @@ function renderShiftCard(shift) {
     </div>`;
   }
 
-  return `<div class="shift-card shift-mod">
+  return `<div class="shift-card shift-mod" style="${personStyle(shift.moderator)}">
     <div class="shift-card-header">
       <span class="shift-role-badge mod">Moderator</span>
       <span class="shift-time">${slot}</span>
@@ -1039,6 +1059,49 @@ function renderShiftCard(shift) {
     ${aussenHtml}
   </div>`;
 }
+
+// ===== Test Week Data =====
+const TEST_WEEK_KW = 12; // KW 12 2026 (aktuelle Woche)
+const TEST_WEEK_YEAR = 2026;
+const TEST_PLAN_DATA = {
+  plan: [
+    // Montag – 3 parallele Schichten
+    { day: "Montag", moderator: "Sascha", room: "1", slot: "09:00", booking_code: "BC-1001", aussenslot_start: "", aussenslot_end: "" },
+    { day: "Montag", moderator: "Alexa", room: "2", slot: "09:30", booking_code: "BC-1002", aussenslot_start: "11:00", aussenslot_end: "12:00" },
+    { day: "Montag", moderator: "Quynh", room: "3", slot: "14:00", booking_code: "BC-1003", aussenslot_start: "", aussenslot_end: "" },
+    // Dienstag – 2 Schichten + Überlappung
+    { day: "Dienstag", moderator: "Vanessa", room: "1", slot: "10:00", booking_code: "BC-1004", aussenslot_start: "12:00", aussenslot_end: "13:30" },
+    { day: "Dienstag", moderator: "Hannah", room: "2", slot: "10:30", booking_code: "BC-1005", aussenslot_start: "", aussenslot_end: "" },
+    { day: "Dienstag", moderator: "Anvi", room: "3", slot: "15:00", booking_code: "BC-1006", aussenslot_start: "", aussenslot_end: "" },
+    // Mittwoch – voll
+    { day: "Mittwoch", moderator: "Favour", room: "1", slot: "09:00", booking_code: "BC-1007", aussenslot_start: "", aussenslot_end: "" },
+    { day: "Mittwoch", moderator: "Jasmin", room: "2", slot: "09:00", booking_code: "BC-1008", aussenslot_start: "11:00", aussenslot_end: "12:30" },
+    { day: "Mittwoch", moderator: "Sascha", room: "3", slot: "13:00", booking_code: "BC-1009", aussenslot_start: "", aussenslot_end: "" },
+    { day: "Mittwoch", moderator: "Alexa", room: "1", slot: "16:00", booking_code: "BC-1010", aussenslot_start: "", aussenslot_end: "" },
+    // Donnerstag – Nachmittag
+    { day: "Donnerstag", moderator: "Quynh", room: "1", slot: "14:00", booking_code: "BC-1011", aussenslot_start: "", aussenslot_end: "" },
+    { day: "Donnerstag", moderator: "Vanessa", room: "2", slot: "14:30", booking_code: "BC-1012", aussenslot_start: "16:30", aussenslot_end: "18:00" },
+    { day: "Donnerstag", moderator: "Hannah", room: "3", slot: "17:00", booking_code: "BC-1013", aussenslot_start: "", aussenslot_end: "" },
+    // Freitag – Vormittag + Nachmittag
+    { day: "Freitag", moderator: "Anvi", room: "1", slot: "09:30", booking_code: "BC-1014", aussenslot_start: "", aussenslot_end: "" },
+    { day: "Freitag", moderator: "Favour", room: "2", slot: "10:00", booking_code: "BC-1015", aussenslot_start: "12:00", aussenslot_end: "13:00" },
+    { day: "Freitag", moderator: "Jasmin", room: "1", slot: "15:00", booking_code: "BC-1016", aussenslot_start: "", aussenslot_end: "" },
+    // Samstag – Wochenende
+    { day: "Samstag", moderator: "Sascha", room: "1", slot: "11:00", booking_code: "BC-1017", aussenslot_start: "", aussenslot_end: "" },
+    { day: "Samstag", moderator: "Quynh", room: "2", slot: "11:00", booking_code: "BC-1018", aussenslot_start: "13:00", aussenslot_end: "14:30" },
+    // Sonntag – leicht
+    { day: "Sonntag", moderator: "Alexa", room: "1", slot: "12:00", booking_code: "BC-1019", aussenslot_start: "", aussenslot_end: "" },
+  ],
+  support: [
+    { day: "Montag", person: "Hamed", start: "14:00", end: "22:00" },
+    { day: "Dienstag", person: "Rehan", start: "14:00", end: "22:00" },
+    { day: "Mittwoch", person: "Hamed", start: "13:00", end: "21:00" },
+    { day: "Donnerstag", person: "Rehan", start: "14:00", end: "22:00" },
+    { day: "Freitag", person: "Hamed", start: "12:00", end: "20:00" },
+    { day: "Samstag", person: "Rehan", start: "11:00", end: "19:00" },
+    { day: "Sonntag", person: "Hamed", start: "12:00", end: "18:00" },
+  ],
+};
 
 // ===== Admin Calendar =====
 function initAdminCalendar() {
@@ -1080,6 +1143,10 @@ async function loadAndRenderAdminShifts() {
 
   const cal = document.getElementById("admin-calendar");
   cal.innerHTML = '<div class="shift-loading">Lade Schichtplan...</div>';
+
+  // Inject test week data for KW 13/2025
+  const testKey = weekKeyStr(TEST_WEEK_KW, TEST_WEEK_YEAR);
+  if (!shiftPlanCache[testKey]) shiftPlanCache[testKey] = TEST_PLAN_DATA;
 
   let planData = { plan: [], support: [] };
   try {
@@ -1130,9 +1197,9 @@ function renderAdminShiftCard(shift, supportForDay) {
     </div>
     <div class="admin-shift-crew">
       <div class="admin-shift-mod">
-        <span class="legend-dot mod"></span> ${mod}
+        <span class="legend-dot mod" style="background:${personColor(mod)}"></span> ${mod}
       </div>
-      ${supHtml}
+      ${supHtml.replace('<span class="legend-dot sup"></span>', `<span class="legend-dot sup" style="background:${supportForDay ? personColor(supportForDay.person) : 'var(--purple)'}"></span>`)}
     </div>
     <div class="admin-shift-code">${shift.booking_code || ""}</div>
   </div>`;
@@ -1343,7 +1410,7 @@ function renderAgendaView(planData, monday, container, filterName, ctx) {
       const durationStr = `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ""}`;
 
       if (ev.type === "sup") {
-        html += `<div class="agenda-card agenda-sup">
+        html += `<div class="agenda-card agenda-sup" style="${personStyle(shift.person)}">
           <div class="agenda-card-accent"></div>
           <div class="agenda-card-body">
             <div class="agenda-card-header">
@@ -1362,7 +1429,7 @@ function renderAgendaView(planData, monday, container, filterName, ctx) {
         const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
         const aussenStr = hasAussen ? `AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}` : "";
 
-        html += `<div class="agenda-card agenda-mod">
+        html += `<div class="agenda-card agenda-mod" style="${personStyle(shift.moderator)}">
           <div class="agenda-card-accent"></div>
           <div class="agenda-card-body">
             <div class="agenda-card-header">

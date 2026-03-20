@@ -1461,8 +1461,8 @@ header {
 }
 
 .tg-event.tg-mod {
-  background: rgba(0, 210, 239, 0.18);
-  border-left: 3px solid var(--cyan);
+  background: color-mix(in srgb, var(--person-color, var(--cyan)) 18%, transparent);
+  border-left: 3px solid var(--person-color, var(--cyan));
 }
 
 .tg-event.tg-sup {
@@ -1494,7 +1494,7 @@ header {
   position: absolute;
   left: 2px;
   width: calc(100% - 4px);
-  background: rgba(139, 92, 246, 0.45);
+  background: color-mix(in srgb, var(--person-color, var(--purple)) 45%, transparent);
   border-radius: 3px;
   display: flex;
   flex-direction: column;
@@ -1507,7 +1507,7 @@ header {
 .tg-support-name {
   font-size: 0.5rem;
   font-weight: 700;
-  color: var(--purple);
+  color: var(--person-color, var(--purple));
   writing-mode: vertical-rl;
   text-orientation: mixed;
   white-space: nowrap;
@@ -1517,7 +1517,7 @@ header {
 
 .tg-support-time {
   font-size: 0.4rem;
-  color: rgba(139, 92, 246, 0.8);
+  color: color-mix(in srgb, var(--person-color, var(--purple)) 80%, transparent);
   writing-mode: vertical-rl;
   text-orientation: mixed;
   white-space: nowrap;
@@ -1640,7 +1640,7 @@ header {
 }
 
 .shift-card.shift-mod {
-  border-left-color: var(--cyan);
+  border-left-color: var(--person-color, var(--cyan));
 }
 
 .shift-card.shift-sup {
@@ -1665,8 +1665,8 @@ header {
 }
 
 .shift-role-badge.mod {
-  background: var(--cyan-dim);
-  color: var(--cyan);
+  background: color-mix(in srgb, var(--person-color, var(--cyan)) 15%, transparent);
+  color: var(--person-color, var(--cyan));
 }
 
 .shift-role-badge.sup {
@@ -2054,11 +2054,11 @@ header {
 }
 
 .agenda-mod .agenda-card-accent {
-  background: var(--cyan);
+  background: var(--person-color, var(--cyan));
 }
 
 .agenda-sup .agenda-card-accent {
-  background: var(--purple);
+  background: var(--person-color, var(--purple));
 }
 
 .agenda-card-body {
@@ -2118,8 +2118,8 @@ header {
 }
 
 .agenda-card-badge.mod {
-  background: var(--cyan-dim);
-  color: var(--cyan);
+  background: color-mix(in srgb, var(--person-color, var(--cyan)) 15%, transparent);
+  color: var(--person-color, var(--cyan));
 }
 
 .agenda-card-badge.sup {
