@@ -1300,10 +1300,8 @@ function initViewToggles() {
       const diff = e.changedTouches[0].clientX - startX;
       const ctx = id === "shift-calendar" ? "shifts" : "admin";
       const currentMode = ctx === "shifts" ? viewModeShifts : viewModeAdmin;
-      const isMobile = window.innerWidth < 768;
-      // Swipe works for agenda always, and for grid on mobile
-      if (Math.abs(diff) < 50) return;
-      if (currentMode !== "agenda" && !(currentMode === "grid" && isMobile)) return;
+      // Swipe only for agenda view, not grid (grid uses day tabs on mobile)
+      if (currentMode !== "agenda" || Math.abs(diff) < 50) return;
       const delta = diff < 0 ? 1 : -1;
       navigateAgendaDay(ctx, delta);
     }, { passive: true });
