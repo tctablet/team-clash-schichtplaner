@@ -1267,17 +1267,21 @@ function initViewToggles() {
           viewModeAdmin = b.dataset.view;
           if (lastPlanDataAdmin && lastMondayAdmin) renderAdminCalendar(lastPlanDataAdmin, lastMondayAdmin);
         }
+        syncAsButtons();
       });
     });
   });
 
   // Außenslot toggle buttons
+  function syncAsButtons() {
+    document.querySelectorAll(".as-toggle").forEach((b) => b.classList.toggle("active", showAussenSlots));
+  }
   ["shifts", "admin"].forEach((ctx) => {
     const btn = document.getElementById(`as-toggle-${ctx}`);
     if (!btn) return;
     btn.addEventListener("click", () => {
       showAussenSlots = !showAussenSlots;
-      document.querySelectorAll(".as-toggle").forEach((b) => b.classList.toggle("active", showAussenSlots));
+      syncAsButtons();
       if (ctx === "shifts" || lastPlanDataShifts) {
         if (lastPlanDataShifts && lastMondayShifts) renderShiftCalendar(lastPlanDataShifts, lastMondayShifts);
       }
