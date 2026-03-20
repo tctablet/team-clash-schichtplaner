@@ -57,11 +57,22 @@ let adminWeekKW = null;
 let adminWeekYear = null;
 const unlockedWeeks = new Set(JSON.parse(localStorage.getItem("tc_unlocked_weeks") || "[]"));
 
+// ===== View Mode State =====
+let viewModeShifts = window.innerWidth < 768 ? "agenda" : "grid";
+let viewModeAdmin = window.innerWidth < 768 ? "agenda" : "grid";
+let agendaDayShifts = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0=Mo
+let agendaDayAdmin = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+let lastPlanDataShifts = null;
+let lastMondayShifts = null;
+let lastPlanDataAdmin = null;
+let lastMondayAdmin = null;
+
 // ===== Init =====
 document.addEventListener("DOMContentLoaded", () => {
   initPinEntry();
   renderCalendar();
   bindNavigation();
+  initViewToggles();
 });
 
 // ===== PIN Entry =====
@@ -906,17 +917,45 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries) {
       }
     });
     const totalCols = columns.length || 1;
+    const MAX_VISIBLE_COLS = 2;
+
+    // Group overlapping events into clusters for +N more chips
+    const overflowClusters = [];
+    if (totalCols > MAX_VISIBLE_COLS) {
+      // Find time ranges where 3+ events overlap
+      const sorted = [...eventData].sort((a, b) => a.startMin - b.startMin);
+      sorted.forEach((ev) => {
+        if (ev.col >= MAX_VISIBLE_COLS) {
+          // Find existing cluster this event fits into
+          let merged = false;
+          for (const cluster of overflowClusters) {
+            if (ev.startMin < cluster.endMin && ev.endMin > cluster.startMin) {
+              cluster.events.push(ev);
+              cluster.startMin = Math.min(cluster.startMin, ev.startMin);
+              cluster.endMin = Math.max(cluster.endMin, ev.endMin);
+              merged = true;
+              break;
+            }
+          }
+          if (!merged) {
+            overflowClusters.push({ startMin: ev.startMin, endMin: ev.endMin, events: [ev] });
+          }
+        }
+      });
+    }
 
     let eventsHtml = "";
+    const displayCols = Math.min(totalCols, MAX_VISIBLE_COLS);
     eventData.forEach((ev) => {
+      if (totalCols > MAX_VISIBLE_COLS && ev.col >= MAX_VISIBLE_COLS) return; // hidden in overflow
+
       const { shift, startMin, endMin } = ev;
       const topPct = ((startMin - gridStartH * 60) / (gridHours * 60)) * 100;
       const heightPct = ((endMin - startMin) / (gridHours * 60)) * 100;
-      const leftPct = (ev.col / totalCols) * 100;
-      const widthPct = (1 / totalCols) * 100;
+      const leftPct = (ev.col / displayCols) * 100;
+      const widthPct = (1 / displayCols) * 100;
 
       if (ev.type === "sup") {
-        // Support band event
         const supPerson = shift.person || "";
         const supStart = formatTimeFromValue(shift.start);
         const supEnd = formatTimeFromValue(shift.end);
@@ -928,7 +967,6 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries) {
           </div>
         </div>`;
       } else {
-        // Moderator/booking event
         const room = shift.room ? roomName(shift.room) : "";
         let label = filterName ? (room || formatTimeFromValue(shift.slot)) : (shift.moderator || "");
         const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
@@ -943,6 +981,24 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries) {
           </div>
         </div>`;
       }
+    });
+
+    // Render +N more chips for overflow clusters
+    overflowClusters.forEach((cluster) => {
+      const topPct = ((cluster.startMin - gridStartH * 60) / (gridHours * 60)) * 100;
+      const heightPct = ((cluster.endMin - cluster.startMin) / (gridHours * 60)) * 100;
+      const evIds = cluster.events.map((_, idx) => idx).join(",");
+      const popoverData = JSON.stringify(cluster.events.map((ev) => {
+        if (ev.type === "sup") {
+          return { type: "sup", person: ev.shift.person || "", start: formatTimeFromValue(ev.shift.start), end: formatTimeFromValue(ev.shift.end) };
+        }
+        return {
+          type: "mod", moderator: ev.shift.moderator || "", room: ev.shift.room ? roomName(ev.shift.room) : "",
+          slot: formatTimeFromValue(ev.shift.slot), code: ev.shift.booking_code || "",
+          aussen: ev.shift.aussenslot_start ? `${formatTimeFromValue(ev.shift.aussenslot_start)}–${formatTimeFromValue(ev.shift.aussenslot_end)}` : ""
+        };
+      })).replace(/"/g, "&quot;");
+      eventsHtml += `<div class="tg-more-chip" style="top:${topPct}%;height:${Math.max(heightPct, 2.5)}%" data-events="${popoverData}">+${cluster.events.length}</div>`;
     });
 
     colsHtml += `<div class="tg-col">
@@ -966,11 +1022,70 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries) {
     <div class="tg-hours">${hoursHtml}</div>
     <div class="tg-cols">${colsHtml}</div>
   </div>${unassignedHint}`;
+
+  // Bind +N more chip click handlers
+  container.querySelectorAll(".tg-more-chip").forEach((chip) => {
+    chip.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // Remove any existing popover
+      document.querySelectorAll(".tg-popover").forEach((p) => p.remove());
+
+      const events = JSON.parse(chip.dataset.events);
+      let popHtml = '<div class="tg-popover-title">Weitere Schichten</div>';
+      events.forEach((ev) => {
+        if (ev.type === "sup") {
+          popHtml += `<div class="tg-popover-item tg-pop-sup">
+            <span class="tg-pop-time">${ev.start}–${ev.end}</span>
+            <span class="tg-pop-name">${ev.person}</span>
+            <span class="agenda-card-badge sup">Support</span>
+          </div>`;
+        } else {
+          popHtml += `<div class="tg-popover-item tg-pop-mod">
+            <span class="tg-pop-time">${ev.slot}${ev.aussen ? "" : ""}</span>
+            <span class="tg-pop-name">${ev.moderator}</span>
+            ${ev.room ? `<span class="tg-pop-room">${ev.room}</span>` : ""}
+            ${ev.aussen ? `<span class="tg-pop-aussen">AS ${ev.aussen}</span>` : ""}
+          </div>`;
+        }
+      });
+
+      const popover = document.createElement("div");
+      popover.className = "tg-popover";
+      popover.innerHTML = popHtml;
+
+      // Position near the chip
+      const chipRect = chip.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      popover.style.position = "fixed";
+      popover.style.left = `${Math.min(chipRect.left, window.innerWidth - 240)}px`;
+      popover.style.top = `${Math.min(chipRect.bottom + 4, window.innerHeight - 200)}px`;
+      popover.style.zIndex = "100";
+      document.body.appendChild(popover);
+
+      // Close on outside click
+      const closePopover = (evt) => {
+        if (!popover.contains(evt.target)) {
+          popover.remove();
+          document.removeEventListener("click", closePopover);
+        }
+      };
+      setTimeout(() => document.addEventListener("click", closePopover), 0);
+    });
+  });
 }
 
 function renderShiftCalendar(planData, monday) {
+  lastPlanDataShifts = planData;
+  lastMondayShifts = monday;
   const cal = document.getElementById("shift-calendar");
-  renderTimeGrid(planData.plan, monday, cal, selectedModerator, planData.support);
+  if (viewModeShifts === "agenda") {
+    renderAgendaView(planData, monday, cal, selectedModerator, "shifts");
+  } else {
+    renderTimeGrid(planData.plan, monday, cal, selectedModerator, planData.support);
+  }
+  // Hide/show day tabs based on view mode
+  const tabs = document.getElementById("agenda-day-tabs-shifts");
+  if (tabs) tabs.style.display = viewModeShifts === "agenda" ? "" : "none";
 }
 
 function renderShiftCard(shift) {
@@ -1097,8 +1212,235 @@ function renderAdminShiftCard(shift, supportForDay) {
 }
 
 function renderAdminCalendar(planData, monday) {
+  lastPlanDataAdmin = planData;
+  lastMondayAdmin = monday;
   const cal = document.getElementById("admin-calendar");
-  renderTimeGrid(planData.plan, monday, cal, null, planData.support);
+  if (viewModeAdmin === "agenda") {
+    renderAgendaView(planData, monday, cal, null, "admin");
+  } else {
+    renderTimeGrid(planData.plan, monday, cal, null, planData.support);
+  }
+  const tabs = document.getElementById("agenda-day-tabs-admin");
+  if (tabs) tabs.style.display = viewModeAdmin === "agenda" ? "" : "none";
+}
+
+// ===== Agenda View =====
+function initViewToggles() {
+  ["shifts", "admin"].forEach((ctx) => {
+    const toggle = document.getElementById(`view-toggle-${ctx}`);
+    if (!toggle) return;
+    const btns = toggle.querySelectorAll(".view-btn");
+    const currentMode = ctx === "shifts" ? viewModeShifts : viewModeAdmin;
+    btns.forEach((b) => {
+      b.classList.toggle("active", b.dataset.view === currentMode);
+      b.addEventListener("click", () => {
+        btns.forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        if (ctx === "shifts") {
+          viewModeShifts = b.dataset.view;
+          if (lastPlanDataShifts && lastMondayShifts) renderShiftCalendar(lastPlanDataShifts, lastMondayShifts);
+        } else {
+          viewModeAdmin = b.dataset.view;
+          if (lastPlanDataAdmin && lastMondayAdmin) renderAdminCalendar(lastPlanDataAdmin, lastMondayAdmin);
+        }
+      });
+    });
+  });
+
+  // Swipe support for agenda day tabs
+  ["shift-calendar", "admin-calendar"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let startX = 0;
+    el.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    el.addEventListener("touchend", (e) => {
+      const diff = e.changedTouches[0].clientX - startX;
+      const ctx = id === "shift-calendar" ? "shifts" : "admin";
+      const currentMode = ctx === "shifts" ? viewModeShifts : viewModeAdmin;
+      if (currentMode !== "agenda" || Math.abs(diff) < 50) return;
+      const delta = diff < 0 ? 1 : -1;
+      navigateAgendaDay(ctx, delta);
+    }, { passive: true });
+  });
+}
+
+let lastSwipeDir = null; // "left" or "right" for slide animation
+
+function navigateAgendaDay(ctx, delta) {
+  lastSwipeDir = delta > 0 ? "left" : "right";
+  if (ctx === "shifts") {
+    agendaDayShifts = Math.max(0, Math.min(6, agendaDayShifts + delta));
+    if (lastPlanDataShifts && lastMondayShifts) renderShiftCalendar(lastPlanDataShifts, lastMondayShifts);
+  } else {
+    agendaDayAdmin = Math.max(0, Math.min(6, agendaDayAdmin + delta));
+    if (lastPlanDataAdmin && lastMondayAdmin) renderAdminCalendar(lastPlanDataAdmin, lastMondayAdmin);
+  }
+  lastSwipeDir = null;
+}
+
+function renderDayTabs(ctx) {
+  const tabsEl = document.getElementById(`agenda-day-tabs-${ctx}`);
+  if (!tabsEl) return;
+  const currentDay = ctx === "shifts" ? agendaDayShifts : agendaDayAdmin;
+  const monday = ctx === "shifts" ? lastMondayShifts : lastMondayAdmin;
+  const dayShorts = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+  // Determine today's index relative to this week's monday
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  let html = "";
+  dayShorts.forEach((ds, i) => {
+    const dayDate = monday ? new Date(monday) : new Date();
+    if (monday) dayDate.setUTCDate(monday.getUTCDate() + i);
+    const dateStr = monday ? `${String(dayDate.getUTCDate()).padStart(2, "0")}.${String(dayDate.getUTCMonth() + 1).padStart(2, "0")}.` : "";
+    const dayDateStr = monday ? `${dayDate.getUTCFullYear()}-${String(dayDate.getUTCMonth() + 1).padStart(2, "0")}-${String(dayDate.getUTCDate()).padStart(2, "0")}` : "";
+    const isToday = dayDateStr === todayStr;
+    const classes = ["agenda-day-tab", i === currentDay ? "active" : "", isToday ? "today" : ""].filter(Boolean).join(" ");
+    html += `<button class="${classes}" data-day="${i}">
+      <span class="agenda-tab-day">${ds}</span>
+      <span class="agenda-tab-date">${dateStr}</span>
+    </button>`;
+  });
+  tabsEl.innerHTML = html;
+  tabsEl.style.display = "";
+
+  tabsEl.querySelectorAll(".agenda-day-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const day = parseInt(btn.dataset.day);
+      if (ctx === "shifts") {
+        agendaDayShifts = day;
+        if (lastPlanDataShifts && lastMondayShifts) renderShiftCalendar(lastPlanDataShifts, lastMondayShifts);
+      } else {
+        agendaDayAdmin = day;
+        if (lastPlanDataAdmin && lastMondayAdmin) renderAdminCalendar(lastPlanDataAdmin, lastMondayAdmin);
+      }
+    });
+  });
+
+  // Scroll active tab into view
+  const activeTab = tabsEl.querySelector(".agenda-day-tab.active");
+  if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+}
+
+function renderAgendaView(planData, monday, container, filterName, ctx) {
+  const plan = planData.plan || [];
+  const supportEntries = planData.support || [];
+
+  const dayShorts = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const dayFull = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+  const currentDay = ctx === "shifts" ? agendaDayShifts : agendaDayAdmin;
+
+  // Show/hide day tabs
+  renderDayTabs(ctx);
+
+  // Filter shifts for selected day
+  const displayPlan = filterName ? plan.filter((e) => e.moderator === filterName) : plan;
+  const assigned = displayPlan.filter((e) => (e.day || "").trim() !== "");
+  const hasDayData = assigned.length > 0;
+
+  const dayShifts = hasDayData
+    ? assigned.filter((e) => matchDay(e, dayFull[currentDay], dayShorts[currentDay]))
+    : (currentDay === 0 ? displayPlan : []);
+
+  // Support for this day
+  const supportByDay = {};
+  supportEntries.forEach((s) => {
+    const d = (s.day || "").trim().toLowerCase();
+    if (d) supportByDay[d] = s;
+  });
+  const daySup = supportByDay[dayFull[currentDay].toLowerCase()] || supportByDay[dayShorts[currentDay].toLowerCase()];
+  const showSupport = daySup && daySup.start && daySup.end && (!filterName || daySup.person === filterName);
+
+  // Check for user support days
+  const userSupportDays = filterName ? supportEntries.filter((s) => s.person === filterName) : [];
+
+  if (plan.length === 0 && supportEntries.length === 0) {
+    container.innerHTML = '<div class="shift-empty">Kein Schichtplan für diese Woche vorhanden.</div>';
+    return;
+  }
+
+  if (filterName && displayPlan.length === 0 && userSupportDays.length === 0) {
+    container.innerHTML = '<div class="shift-empty">Keine Schichten für dich in dieser Woche.</div>';
+    return;
+  }
+
+  // Build event list sorted by time
+  const events = [];
+  dayShifts.forEach((shift) => {
+    const { startMin, endMin } = getShiftStartEnd(shift);
+    events.push({ shift, startMin, endMin, type: "mod" });
+  });
+  if (showSupport) {
+    const st = parseTimeToMinutes(daySup.start);
+    const en = parseTimeToMinutes(daySup.end);
+    if (st != null && en != null) {
+      events.push({ shift: daySup, startMin: st, endMin: en, type: "sup" });
+    }
+  }
+  events.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+
+  // Day header
+  const dayDate = new Date(monday);
+  dayDate.setUTCDate(monday.getUTCDate() + currentDay);
+  const dayHeader = `${dayFull[currentDay]}, ${formatDateLong(dayDate)}`;
+
+  const slideClass = lastSwipeDir ? ` slide-${lastSwipeDir}` : "";
+  let html = `<div class="agenda-view${slideClass}">`;
+  html += `<div class="agenda-day-header">${dayHeader}</div>`;
+
+  if (events.length === 0) {
+    html += `<div class="agenda-empty">Keine Schichten an diesem Tag</div>`;
+  } else {
+    events.forEach((ev) => {
+      const { shift, startMin, endMin } = ev;
+      const startTime = ev.type === "sup" ? formatTimeFromValue(shift.start) : formatTimeFromValue(shift.slot);
+      const endTime = ev.type === "sup" ? formatTimeFromValue(shift.end) : formatTimeFromValue(shift.aussenslot_end || "");
+      const duration = endMin - startMin;
+      const durationStr = `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ""}`;
+
+      if (ev.type === "sup") {
+        html += `<div class="agenda-card agenda-sup">
+          <div class="agenda-card-accent"></div>
+          <div class="agenda-card-body">
+            <div class="agenda-card-header">
+              <span class="agenda-card-time">${startTime} – ${endTime}</span>
+              <span class="agenda-card-duration">${durationStr}</span>
+            </div>
+            <div class="agenda-card-title">${shift.person || ""}</div>
+            <div class="agenda-card-meta">
+              <span class="agenda-card-badge sup">Support</span>
+            </div>
+          </div>
+        </div>`;
+      } else {
+        const room = shift.room ? roomName(shift.room) : "";
+        const label = filterName ? room : (shift.moderator || "");
+        const hasAussen = shift.aussenslot_start && shift.aussenslot_end;
+        const aussenStr = hasAussen ? `AS ${formatTimeFromValue(shift.aussenslot_start)}–${formatTimeFromValue(shift.aussenslot_end)}` : "";
+
+        html += `<div class="agenda-card agenda-mod">
+          <div class="agenda-card-accent"></div>
+          <div class="agenda-card-body">
+            <div class="agenda-card-header">
+              <span class="agenda-card-time">${startTime}${endTime ? ` – ${endTime}` : ""}</span>
+              <span class="agenda-card-duration">${durationStr}</span>
+            </div>
+            <div class="agenda-card-title">${label}</div>
+            <div class="agenda-card-meta">
+              <span class="agenda-card-badge mod">Moderator</span>
+              ${room && !filterName ? `<span class="agenda-card-room">${room}</span>` : ""}
+              ${shift.booking_code ? `<span class="agenda-card-code">${shift.booking_code}</span>` : ""}
+            </div>
+            ${hasAussen ? `<div class="agenda-card-aussen"><span class="legend-dot aussen"></span> ${aussenStr}</div>` : ""}
+          </div>
+        </div>`;
+      }
+    });
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
 }
 
 // ===== GAS API =====
