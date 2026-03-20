@@ -2147,11 +2147,23 @@ header {
 
   #step-admin {
     overflow-x: hidden;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  #step-admin .admin-tabs,
+  #step-admin .admin-week-nav,
+  #step-admin .view-toggle {
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
   #step-admin .time-grid {
     min-width: 0 !important;
     max-width: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
 
   #step-admin .tg-col {
@@ -2170,6 +2182,12 @@ header {
 
   .agenda-day-tabs {
     justify-content: center;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg-primary);
+    padding: 8px 12px;
+    margin: 0;
   }
 
   .agenda-day-tab {
@@ -2196,6 +2214,21 @@ header {
 
   .avail-partial {
     font-size: 0.65rem;
+  }
+
+  #step-shifts {
+    overflow-x: hidden;
+  }
+
+  #step-shifts .time-grid {
+    min-width: 0 !important;
+    max-width: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
   }
 
   /* Grid single-day mode on mobile */
