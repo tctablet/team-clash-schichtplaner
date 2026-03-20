@@ -1088,6 +1088,75 @@ header {
   font-size: 0.75rem;
 }
 
+/* Availability Mobile Day List */
+.avail-day-list { display: none; }
+
+.avail-day-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 0 0 12px;
+}
+
+.avail-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+
+.avail-card-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.avail-card.avail-full .avail-card-icon {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.avail-card.avail-partial .avail-card-icon {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.avail-card.avail-no .avail-card-icon {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+}
+
+.avail-card-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.avail-card.avail-no .avail-card-name {
+  opacity: 0.5;
+}
+
+.avail-card-val {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.avail-card.avail-full .avail-card-val { color: #34d399; }
+.avail-card.avail-partial .avail-card-val { color: #fbbf24; }
+.avail-card.avail-no .avail-card-val { opacity: 0.5; }
+
 /* ===== Admin Full-Width Layout ===== */
 #step-admin {
   max-width: none;

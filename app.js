@@ -69,6 +69,7 @@ let lastMondayAdmin = null;
 let availWeekKW = null;
 let availWeekYear = null;
 let availViewType = "weekly"; // "weekly" or "general"
+let availDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0=Mo
 let availCache = {}; // { "KW_YEAR": { weekly: [...], general: [...] } }
 
 // ===== Init =====
@@ -1267,6 +1268,19 @@ function initViewToggles() {
     });
   });
 
+  // Swipe support for avail day list
+  const availListEl = document.getElementById("avail-day-list");
+  if (availListEl) {
+    let startX = 0;
+    availListEl.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    availListEl.addEventListener("touchend", (e) => {
+      const diff = e.changedTouches[0].clientX - startX;
+      if (Math.abs(diff) < 50) return;
+      availDayIdx = Math.max(0, Math.min(6, availDayIdx + (diff < 0 ? 1 : -1)));
+      renderAvailTable();
+    }, { passive: true });
+  }
+
   // Swipe support for agenda day tabs
   ["shift-calendar", "admin-calendar"].forEach((id) => {
     const el = document.getElementById(id);
@@ -1664,6 +1678,14 @@ function initAvailWeek() {
   const now = new Date();
   availWeekKW = getISOWeek(now);
   availWeekYear = getISOWeekYear(now);
+  let lastMobile = isMobileAvail();
+  window.addEventListener("resize", () => {
+    const mobile = isMobileAvail();
+    if (mobile !== lastMobile && availCache[`${availWeekKW}_${availWeekYear}`]) {
+      lastMobile = mobile;
+      renderAvailTable();
+    }
+  });
   loadAvailData();
 }
 
@@ -1712,12 +1734,15 @@ async function loadAvailData() {
   }
 
   loadingEl.style.display = "none";
-  tableEl.style.display = "";
   renderAvailTable();
 }
 
+function isMobileAvail() { return window.innerWidth < 768; }
+
 function renderAvailTable() {
   const tableEl = document.getElementById("avail-table");
+  const listEl = document.getElementById("avail-day-list");
+  const tabsEl = document.getElementById("avail-day-tabs");
   const cacheKey = `${availWeekKW}_${availWeekYear}`;
   const cached = availCache[cacheKey];
   if (!cached) return;
@@ -1725,25 +1750,94 @@ function renderAvailTable() {
   const dayKeys = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
   const entries = availViewType === "weekly" ? cached.weekly : cached.general;
 
-  let html = `<thead><tr><th>Name</th>`;
-  dayKeys.forEach(d => { html += `<th>${d}</th>`; });
-  html += `</tr></thead><tbody>`;
+  if (isMobileAvail()) {
+    // Mobile: day tabs + card list
+    tableEl.style.display = "none";
+    listEl.style.display = "";
+    renderAvailDayTabs();
 
-  TEAM.forEach(member => {
-    const entry = entries.find(e => e.Name === member.name);
-    const fallback = availViewType === "general" && GENERAL_DEFAULTS[member.name];
+    const dk = dayKeys[availDayIdx];
+    const dayFull = DAYS[availDayIdx];
+    let html = `<h4 class="avail-day-title">${dayFull}</h4>`;
 
-    html += `<tr><td class="avail-name">${member.name}</td>`;
-    dayKeys.forEach(d => {
-      let val = entry ? entry[d] : null;
-      if (!val && fallback) val = fallback[d];
-      html += `<td class="avail-cell ${availCellClass(val)}">${availCellLabel(val)}</td>`;
+    TEAM.forEach(member => {
+      const entry = entries.find(e => e.Name === member.name);
+      const fallback = availViewType === "general" && GENERAL_DEFAULTS[member.name];
+      let val = entry ? entry[dk] : null;
+      if (!val && fallback) val = fallback[dk];
+      const cls = availCellClass(val);
+      const label = availCellLabel(val);
+      const icon = cls === "avail-full" ? "&#10003;" : cls === "avail-partial" ? "&#9201;" : "&#10005;";
+
+      html += `<div class="avail-card ${cls}">
+        <span class="avail-card-icon">${icon}</span>
+        <span class="avail-card-name">${member.name}</span>
+        <span class="avail-card-val">${label}</span>
+      </div>`;
     });
-    html += `</tr>`;
+
+    listEl.innerHTML = html;
+  } else {
+    // Desktop: full table
+    tableEl.style.display = "";
+    listEl.style.display = "none";
+    tabsEl.style.display = "none";
+
+    let html = `<thead><tr><th>Name</th>`;
+    dayKeys.forEach(d => { html += `<th>${d}</th>`; });
+    html += `</tr></thead><tbody>`;
+
+    TEAM.forEach(member => {
+      const entry = entries.find(e => e.Name === member.name);
+      const fallback = availViewType === "general" && GENERAL_DEFAULTS[member.name];
+
+      html += `<tr><td class="avail-name">${member.name}</td>`;
+      dayKeys.forEach(d => {
+        let val = entry ? entry[d] : null;
+        if (!val && fallback) val = fallback[d];
+        html += `<td class="avail-cell ${availCellClass(val)}">${availCellLabel(val)}</td>`;
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody>`;
+    tableEl.innerHTML = html;
+  }
+}
+
+function renderAvailDayTabs() {
+  const tabsEl = document.getElementById("avail-day-tabs");
+  if (!tabsEl) return;
+  const monday = getMondayOfISOWeek(availWeekKW, availWeekYear);
+  const dayShorts = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  let html = "";
+  dayShorts.forEach((ds, i) => {
+    const dayDate = new Date(monday);
+    dayDate.setUTCDate(monday.getUTCDate() + i);
+    const dateStr = `${String(dayDate.getUTCDate()).padStart(2, "0")}.${String(dayDate.getUTCMonth() + 1).padStart(2, "0")}.`;
+    const dayDateStr = `${dayDate.getUTCFullYear()}-${String(dayDate.getUTCMonth() + 1).padStart(2, "0")}-${String(dayDate.getUTCDate()).padStart(2, "0")}`;
+    const isToday = dayDateStr === todayStr;
+    const classes = ["agenda-day-tab", i === availDayIdx ? "active" : "", isToday ? "today" : ""].filter(Boolean).join(" ");
+    html += `<button class="${classes}" data-day="${i}">
+      <span class="agenda-tab-day">${ds}</span>
+      <span class="agenda-tab-date">${dateStr}</span>
+    </button>`;
+  });
+  tabsEl.innerHTML = html;
+  tabsEl.style.display = "";
+
+  tabsEl.querySelectorAll(".agenda-day-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      availDayIdx = parseInt(btn.dataset.day);
+      renderAvailTable();
+    });
   });
 
-  html += `</tbody>`;
-  tableEl.innerHTML = html;
+  const activeTab = tabsEl.querySelector(".agenda-day-tab.active");
+  if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
 }
 
 function availCellClass(val) {
