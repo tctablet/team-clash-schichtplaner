@@ -2161,6 +2161,7 @@ header {
   #step-admin .time-grid {
     min-width: 0 !important;
     max-width: 100%;
+    overflow: visible !important;
     border-radius: 0;
     border-left: none;
     border-right: none;
@@ -2233,7 +2234,7 @@ header {
 
   /* Grid single-day mode on mobile */
   .time-grid {
-    overflow-x: hidden !important;
+    overflow: visible !important;
     max-width: 100%;
   }
 
