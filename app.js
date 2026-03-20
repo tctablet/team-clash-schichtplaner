@@ -985,7 +985,7 @@ function renderTimeGrid(plan, monday, container, filterName, supportEntries, ctx
           const supEnd = formatTimeFromValue(daySup.end);
           supportBandHtml = `<div class="tg-support-band" style="${personStyle(supPerson)}" title="Support: ${supPerson} ${supStart}–${supEnd}">
             <div class="tg-support-bg"></div>
-            <div class="tg-support-fill" style="top:${topPct}%;height:${heightPct}%;${personStyle(supPerson)}">`
+            <div class="tg-support-fill" style="top:${topPct}%;height:${heightPct}%;${personStyle(supPerson)}">
               <span class="tg-support-name">${supPerson}</span>
               <span class="tg-support-time">${supStart}–${supEnd}</span>
             </div>
