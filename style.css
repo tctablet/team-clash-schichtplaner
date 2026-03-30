@@ -1078,8 +1078,9 @@ header {
 }
 
 .avail-no {
-  color: var(--text-dim);
-  opacity: 0.5;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  font-weight: 600;
 }
 
 .avail-partial {
@@ -1132,8 +1133,8 @@ header {
 }
 
 .avail-card.avail-no .avail-card-icon {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-dim);
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
 }
 
 .avail-card-name {
@@ -1144,7 +1145,7 @@ header {
 }
 
 .avail-card.avail-no .avail-card-name {
-  opacity: 0.5;
+  opacity: 0.75;
 }
 
 .avail-card-val {
@@ -1155,7 +1156,7 @@ header {
 
 .avail-card.avail-full .avail-card-val { color: #34d399; }
 .avail-card.avail-partial .avail-card-val { color: #fbbf24; }
-.avail-card.avail-no .avail-card-val { opacity: 0.5; }
+.avail-card.avail-no .avail-card-val { color: #f87171; }
 
 /* ===== Admin Full-Width Layout ===== */
 #step-admin {

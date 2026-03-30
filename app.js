@@ -18,7 +18,7 @@ const SLIDER_MIN = 8.5; // 08:30
 const SLIDER_MAX = 24; // 00:00
 const SLIDER_DEFAULT = [8.5, 24]; // 08:30 - 00:00
 const STORAGE_KEY = "tc_availability";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwa8NRqz-TFDcuY925IGCQ3KgEw1eduxtKqRCLJbq_JCnwtrqzJtJ8mDo7R9gH48vED/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzSTFp6Fh6dfd1CZKyREZ0F5epHYdltugnaZxikL9uue_YyhnDT9cOnwhh8iJ1FXt7k/exec";
 const DAY_MAP = { montag: "Mo", dienstag: "Di", mittwoch: "Mi", donnerstag: "Do", freitag: "Fr", samstag: "Sa", sonntag: "So" };
 function roomName(id) { return /^\d+(\.\d+)?$/.test(String(id)) ? `Raum ${Math.floor(id)}` : String(id); }
 
@@ -84,7 +84,7 @@ let lastPlanDataAdmin = null;
 let lastMondayAdmin = null;
 let availWeekKW = null;
 let availWeekYear = null;
-let availViewType = "weekly"; // "weekly" or "general"
+let availViewType = "merged"; // "merged", "weekly", or "general"
 let availDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0=Mo
 let availCache = {}; // { "KW_YEAR": { weekly: [...], general: [...] } }
 let showAussenSlots = false; // Außenslot overlay toggle
@@ -1782,6 +1782,28 @@ async function loadAvailData() {
 
 function isMobileAvail() { return window.innerWidth < 768; }
 
+function getAvailValue(cached, member, dk) {
+  if (availViewType === "weekly") {
+    const entry = cached.weekly.find(e => e.Name === member.name);
+    return entry ? entry[dk] : null;
+  }
+  if (availViewType === "general") {
+    const entry = cached.general.find(e => e.Name === member.name);
+    let val = entry ? entry[dk] : null;
+    if (!val) val = GENERAL_DEFAULTS[member.name] ? GENERAL_DEFAULTS[member.name][dk] : null;
+    return val;
+  }
+  // merged: weekly first, then general GAS, then GENERAL_DEFAULTS
+  const weeklyEntry = cached.weekly.find(e => e.Name === member.name);
+  let val = weeklyEntry ? weeklyEntry[dk] : null;
+  if (!val) {
+    const generalEntry = cached.general.find(e => e.Name === member.name);
+    val = generalEntry ? generalEntry[dk] : null;
+  }
+  if (!val) val = GENERAL_DEFAULTS[member.name] ? GENERAL_DEFAULTS[member.name][dk] : null;
+  return val;
+}
+
 function renderAvailTable() {
   const tableEl = document.getElementById("avail-table");
   const listEl = document.getElementById("avail-day-list");
@@ -1791,7 +1813,6 @@ function renderAvailTable() {
   if (!cached) return;
 
   const dayKeys = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-  const entries = availViewType === "weekly" ? cached.weekly : cached.general;
 
   if (isMobileAvail()) {
     // Mobile: day tabs + card list
@@ -1804,10 +1825,7 @@ function renderAvailTable() {
     let html = `<h4 class="avail-day-title">${dayFull}</h4>`;
 
     TEAM.forEach(member => {
-      const entry = entries.find(e => e.Name === member.name);
-      const fallback = availViewType === "general" && GENERAL_DEFAULTS[member.name];
-      let val = entry ? entry[dk] : null;
-      if (!val && fallback) val = fallback[dk];
+      const val = getAvailValue(cached, member, dk);
       const cls = availCellClass(val);
       const label = availCellLabel(val);
       const icon = cls === "avail-full" ? "&#10003;" : cls === "avail-partial" ? "&#9201;" : "&#10005;";
@@ -1831,13 +1849,9 @@ function renderAvailTable() {
     html += `</tr></thead><tbody>`;
 
     TEAM.forEach(member => {
-      const entry = entries.find(e => e.Name === member.name);
-      const fallback = availViewType === "general" && GENERAL_DEFAULTS[member.name];
-
       html += `<tr><td class="avail-name">${member.name}</td>`;
       dayKeys.forEach(d => {
-        let val = entry ? entry[d] : null;
-        if (!val && fallback) val = fallback[d];
+        const val = getAvailValue(cached, member, d);
         html += `<td class="avail-cell ${availCellClass(val)}">${availCellLabel(val)}</td>`;
       });
       html += `</tr>`;
@@ -1890,7 +1904,7 @@ function availCellClass(val) {
 }
 
 function availCellLabel(val) {
-  if (!val || val === "Nicht") return "—";
+  if (!val || val === "Nicht") return "✕";
   if (val === "Voll") return "Voll";
   return val.replace("-", "–");
 }
