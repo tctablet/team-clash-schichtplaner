@@ -1828,7 +1828,7 @@ function renderAvailTable() {
       const val = getAvailValue(cached, member, dk);
       const cls = availCellClass(val);
       const label = availCellLabel(val);
-      const icon = cls === "avail-full" ? "&#10003;" : cls === "avail-partial" ? "&#9201;" : "&#10005;";
+      const icon = cls === "avail-full" ? "&#10003;" : cls === "avail-partial" ? "&#9201;" : cls === "avail-no" ? "&#10005;" : "—";
 
       html += `<div class="avail-card ${cls}">
         <span class="avail-card-icon">${icon}</span>
@@ -1898,13 +1898,15 @@ function renderAvailDayTabs() {
 }
 
 function availCellClass(val) {
-  if (!val || val === "Nicht") return "avail-no";
+  if (val === "Nicht") return "avail-no";
+  if (!val) return "avail-empty";
   if (val === "Voll") return "avail-full";
   return "avail-partial";
 }
 
 function availCellLabel(val) {
-  if (!val || val === "Nicht") return "✕";
+  if (val === "Nicht") return "✕";
+  if (!val) return "—";
   if (val === "Voll") return "Voll";
   return val.replace("-", "–");
 }
