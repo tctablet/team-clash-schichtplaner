@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
   <div class="app">
@@ -49,7 +49,7 @@
       <div class="admin-tabs">
         <button class="admin-tab active" data-tab="admin-overview">Wochenplan</button>
         <button class="admin-tab" data-tab="admin-avail">Verfügbarkeiten</button>
-        <button class="admin-tab" data-tab="admin-codes">Codes</button>
+        <button class="admin-tab" data-tab="admin-staff">Mitarbeiter</button>
       </div>
 
       <!-- Tab: Full Overview -->
@@ -93,11 +93,11 @@
         </div>
       </div>
 
-      <!-- Tab: Codes -->
-      <div class="admin-tab-content" id="admin-codes">
+      <!-- Tab: Mitarbeiter & Codes -->
+      <div class="admin-tab-content" id="admin-staff">
         <div class="admin-panel">
-          <table class="code-table" id="code-table"></table>
-          <button class="btn-primary btn-save-codes" id="btn-save-codes" style="display:none;">Codes speichern</button>
+          <table class="staff-table" id="staff-table"></table>
+          <button class="btn-primary btn-save-staff" id="btn-save-staff" style="display:none;">Speichern</button>
           <button class="btn-primary btn-copy" id="btn-copy-codes">Codes kopieren</button>
         </div>
       </div>
@@ -208,6 +208,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
-  <script src="app.js?v=17"></script>
+  <script src="app.js?v=19"></script>
 </body>
 </html>
