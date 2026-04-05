@@ -1,15 +1,17 @@
 // ===== Team Data =====
+const EMPLOYMENT_TYPES = ["Minijob", "Werkstudent", "Teilzeit", "Vollzeit"];
 const TEAM = [
-  { name: "Sascha", role: "Head of Ops", code: "2847" },
-  { name: "Alexa", role: "Teilzeit", code: "5931" },
-  { name: "Quynh", role: "Teilzeit", code: "3614" },
-  { name: "Vanessa", role: "Werkstudent", code: "7258" },
-  { name: "Hannah", role: "Werkstudent", code: "4162" },
-  { name: "Anvi", role: "Minijob", code: "8493" },
-  { name: "Favour", role: "Minijob", code: "6725" },
-  { name: "Jasmin", role: "Minijob", code: "1376" },
-  { name: "Hamed", role: "Support", code: "9041" },
-  { name: "Rehan", role: "Support", code: "3587" },
+  { name: "Sascha", role: "Head of Ops", code: "2847", employment: "Vollzeit", monthlyHours: 160 },
+  { name: "Alexa", role: "Teilzeit", code: "5931", employment: "Teilzeit", monthlyHours: 80 },
+  { name: "Quynh", role: "Teilzeit", code: "3614", employment: "Teilzeit", monthlyHours: 80 },
+  { name: "Vanessa", role: "Werkstudent", code: "7258", employment: "Werkstudent", monthlyHours: 80 },
+  { name: "Hannah", role: "Werkstudent", code: "4162", employment: "Werkstudent", monthlyHours: 80 },
+  { name: "Anvi", role: "Minijob", code: "8493", employment: "Minijob", monthlyHours: 43 },
+  { name: "Favour", role: "Minijob", code: "6725", employment: "Minijob", monthlyHours: 43 },
+  { name: "Jasmin", role: "Minijob", code: "1376", employment: "Minijob", monthlyHours: 43 },
+  { name: "Hamed", role: "Support", code: "9041", employment: "Minijob", monthlyHours: 43 },
+  { name: "Rehan", role: "Support", code: "3587", employment: "Minijob", monthlyHours: 43 },
+  { name: "Jule", role: "Support", code: "5284", employment: "Minijob", monthlyHours: 43 },
 ];
 let ADMIN_CODE = "0800";
 
@@ -34,6 +36,7 @@ const GENERAL_DEFAULTS = {
   "Jasmin":  { Mo: "Voll", Di: "Voll", Mi: "Voll", Do: "Voll", Fr: "Voll", Sa: "Voll", So: "Voll" },
   "Hamed":   { Mo: "14:00-00:00", Di: "14:00-00:00", Mi: "14:00-00:00", Do: "14:00-00:00", Fr: "14:00-00:00", Sa: "Voll", So: "Voll" },
   "Rehan":   { Mo: "17:00-00:00", Di: "14:00-00:00", Mi: "14:00-00:00", Do: "14:00-00:00", Fr: "Voll", Sa: "Voll", So: "Voll" },
+  "Jule":    { Mo: "Voll", Di: "Voll", Mi: "Voll", Do: "Voll", Fr: "Voll", Sa: "Voll", So: "Voll" },
 };
 
 const MONTH_NAMES = [
@@ -53,6 +56,7 @@ const MODERATOR_COLORS = {
   "Jasmin": "#84cc16",
   "Hamed": "#ef4444",
   "Rehan": "#f97316",
+  "Jule": "#14b8a6",
 };
 function personColor(name) { return MODERATOR_COLORS[name] || "var(--cyan)"; }
 function personStyle(name) { return `--person-color:${personColor(name)}`; }
@@ -186,7 +190,7 @@ function checkPin() {
 
 // ===== Admin Panel =====
 function showAdminPanel() {
-  renderCodeTable();
+  renderStaffTable();
 
   // Init admin calendar
   initAdminCalendar();
@@ -1573,22 +1577,37 @@ function mergeEntry(entries, newEntry) {
   return entries;
 }
 
-// ===== Team Codes =====
-// Codes are stored directly in the TEAM array above (no backend needed).
 
-function renderCodeTable() {
-  const table = document.getElementById("code-table");
+// ===== Staff Management =====
+
+function renderStaffTable() {
+  const table = document.getElementById("staff-table");
   table.innerHTML = `
     <thead>
-      <tr><th>Name</th><th>Rolle</th><th>Code</th></tr>
+      <tr><th>Name</th><th>Rolle</th><th>Code</th><th>Anstellung</th><th>Std/Monat</th><th></th></tr>
     </thead>
     <tbody>
       ${TEAM.map((m, i) => `
         <tr>
-          <td class="admin-name">${m.name}</td>
-          <td class="admin-role">${m.role}</td>
+          <td class="admin-name">
+            <input type="text" class="staff-name-input" data-idx="${i}" value="${m.name}">
+          </td>
+          <td class="admin-role">
+            <input type="text" class="staff-role-input" data-idx="${i}" value="${m.role}">
+          </td>
           <td class="admin-code">
             <input type="text" class="code-input" data-idx="${i}" value="${m.code}" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+          </td>
+          <td class="staff-employment">
+            <select class="staff-select" data-idx="${i}">
+              ${EMPLOYMENT_TYPES.map(t => `<option value="${t}"${t === m.employment ? " selected" : ""}>${t}</option>`).join("")}
+            </select>
+          </td>
+          <td class="staff-hours">
+            <input type="number" class="staff-hours-input" data-idx="${i}" value="${m.monthlyHours}" min="0" max="200" step="1" inputmode="numeric">
+          </td>
+          <td class="staff-actions">
+            <button class="btn-remove-staff" data-idx="${i}" title="Entfernen">&times;</button>
           </td>
         </tr>`).join("")}
       <tr class="admin-row-special">
@@ -1597,22 +1616,56 @@ function renderCodeTable() {
         <td class="admin-code">
           <input type="text" class="code-input" data-admin="true" value="${ADMIN_CODE}" maxlength="4" inputmode="numeric" pattern="[0-9]*">
         </td>
+        <td colspan="3"></td>
+      </tr>
+      <tr class="staff-add-row">
+        <td colspan="6">
+          <button class="btn-add-staff" id="btn-add-staff">+ Mitarbeiter hinzufügen</button>
+        </td>
       </tr>
     </tbody>`;
 
-  // Bind save on change
-  const btnSave = document.getElementById("btn-save-codes");
-  const btnCopy = document.getElementById("btn-copy-codes");
+  // Remove handler
+  table.querySelectorAll(".btn-remove-staff").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.idx);
+      const name = TEAM[idx]?.name || "?";
+      if (!confirm(`„${name}" wirklich entfernen?`)) return;
+      TEAM.splice(idx, 1);
+      renderStaffTable();
+    });
+  });
 
-  // Show save button, attach handler
+  // Add handler
+  document.getElementById("btn-add-staff").addEventListener("click", () => {
+    const code = String(Math.floor(1000 + Math.random() * 9000));
+    TEAM.push({ name: "", role: "", code, employment: "Minijob", monthlyHours: 43 });
+    renderStaffTable();
+    const lastNameInput = table.querySelector(`tr:nth-last-child(3) .staff-name-input`);
+    if (lastNameInput) lastNameInput.focus();
+  });
+
+  // Copy codes handler
+  document.getElementById("btn-copy-codes").onclick = () => {
+    const text = TEAM.map((m) => `${m.name}: ${m.code}`).join("\n") + `\nAdmin: ${ADMIN_CODE}`;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById("btn-copy-codes");
+      btn.textContent = "Kopiert!";
+      setTimeout(() => { btn.textContent = "Codes kopieren"; }, 2000);
+    });
+  };
+
+  const btnSave = document.getElementById("btn-save-staff");
   btnSave.style.display = "block";
   btnSave.onclick = () => {
-    // Validate: all codes must be exactly 4 digits and unique
-    const inputs = table.querySelectorAll(".code-input");
-    const codes = new Set();
+    const rows = table.querySelectorAll("tbody tr:not(.staff-add-row):not(.admin-row-special)");
+    const adminCodeInp = table.querySelector('.code-input[data-admin="true"]');
+    const allCodeInputs = table.querySelectorAll(".code-input");
     let valid = true;
 
-    inputs.forEach((inp) => {
+    // Validate codes: 4 digits, unique
+    const codes = new Set();
+    allCodeInputs.forEach((inp) => {
       const val = inp.value.replace(/\D/g, "");
       inp.value = val;
       if (val.length !== 4) {
@@ -1627,33 +1680,49 @@ function renderCodeTable() {
       }
     });
 
+    // Validate names & hours
+    rows.forEach((row) => {
+      const nameInp = row.querySelector(".staff-name-input");
+      const hoursInp = row.querySelector(".staff-hours-input");
+      if (nameInp && !nameInp.value.trim()) {
+        nameInp.classList.add("staff-error");
+        valid = false;
+      } else if (nameInp) {
+        nameInp.classList.remove("staff-error");
+      }
+      if (hoursInp) {
+        const val = parseInt(hoursInp.value);
+        if (isNaN(val) || val < 0 || val > 200) {
+          hoursInp.classList.add("staff-error");
+          valid = false;
+        } else {
+          hoursInp.classList.remove("staff-error");
+        }
+      }
+    });
+
     if (!valid) {
-      btnSave.textContent = "Codes müssen 4-stellig & einzigartig sein";
-      setTimeout(() => { btnSave.textContent = "Codes speichern"; }, 2500);
+      btnSave.textContent = "Eingaben prüfen";
+      setTimeout(() => { btnSave.textContent = "Speichern"; }, 2500);
       return;
     }
 
-    // Apply to TEAM array and ADMIN_CODE
-    inputs.forEach((inp) => {
-      if (inp.dataset.admin === "true") {
-        ADMIN_CODE = inp.value;
-        return;
-      }
-      const idx = parseInt(inp.dataset.idx);
-      if (TEAM[idx]) TEAM[idx].code = inp.value;
+    // Apply admin code
+    if (adminCodeInp) ADMIN_CODE = adminCodeInp.value;
+
+    // Apply team data
+    rows.forEach((row) => {
+      const idx = parseInt(row.querySelector(".staff-name-input")?.dataset.idx);
+      if (isNaN(idx) || !TEAM[idx]) return;
+      TEAM[idx].name = row.querySelector(".staff-name-input").value.trim();
+      TEAM[idx].role = row.querySelector(".staff-role-input").value.trim();
+      TEAM[idx].code = row.querySelector(".code-input").value;
+      TEAM[idx].employment = row.querySelector(".staff-select").value;
+      TEAM[idx].monthlyHours = parseInt(row.querySelector(".staff-hours-input").value);
     });
 
     btnSave.textContent = "Gespeichert!";
-    setTimeout(() => { btnSave.textContent = "Codes speichern"; }, 2000);
-  };
-
-  // Update copy handler
-  btnCopy.onclick = () => {
-    const text = TEAM.map((m) => `${m.name}: ${m.code}`).join("\n") + `\nAdmin: ${ADMIN_CODE}`;
-    navigator.clipboard.writeText(text).then(() => {
-      btnCopy.textContent = "Kopiert!";
-      setTimeout(() => { btnCopy.textContent = "Codes kopieren"; }, 2000);
-    });
+    setTimeout(() => { btnSave.textContent = "Speichern"; }, 2000);
   };
 }
 
